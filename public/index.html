@@ -56,16 +56,32 @@
   .search-row { display: flex; gap: 8px; margin-bottom: 16px; }
   .search-row input { flex: 1; font-family: 'Inter', sans-serif; font-size: 15px; padding: 12px 14px; border-radius: 8px; border: 1px solid rgba(237,228,211,0.2); background: var(--bg); color: var(--paper-soft); }
   .search-row input:focus { outline: none; border-color: var(--mustard); }
-  .search-row button { font-family: 'Space Grotesk', sans-serif; font-weight: 700; padding: 12px 18px; border-radius: 8px; border: none; background: var(--mustard); color: #2B2013; cursor: pointer; }
+  .search-row button { font-family: 'Space Grotesk', sans-serif; font-weight: 700; padding: 12px 18px; border-radius: 8px; border: none; background: var(--mustard); color: #2B2013; cursor: pointer; white-space: nowrap; }
   .search-row button:disabled { opacity: 0.5; }
   .search-hint { font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: rgba(237,228,211,0.4); margin: -8px 0 20px; }
-  .search-error { font-size: 13px; color: var(--tomato); margin: -8px 0 16px; }
+  .search-error { font-size: 13px; color: var(--tomato); margin: 0 0 16px; padding: 10px 14px; background: rgba(193,68,58,0.12); border-radius: 8px; border: 1px solid rgba(193,68,58,0.3); }
+
+  /* Recibo con thumbnail */
+  .receipt-line { display: flex; align-items: center; gap: 10px; padding: 5px 0; opacity: 0; animation: lineIn 0.35s ease forwards; }
+  .receipt-line .thumb { width: 32px; height: 32px; border-radius: 4px; object-fit: cover; flex-shrink: 0; background: var(--line); }
+  .receipt-line .name { flex: 1; font-size: 12.5px; }
+  .receipt-line .price-col { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+  .receipt-line .price { font-weight: 600; white-space: nowrap; }
+  .receipt-line .rm { cursor: pointer; color: var(--tomato); font-weight: 700; font-size: 14px; padding: 0 2px; line-height: 1; }
+  .receipt-line.error { color: var(--tomato); font-style: italic; }
+  @keyframes lineIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* Controles de cantidad en búsqueda */
+  .qty-ctrl { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+  .qty-btn { font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 14px; width: 22px; height: 22px; border-radius: 4px; border: 1px solid var(--line); background: var(--paper-soft); color: var(--ink); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; line-height: 1; }
+  .qty-num { font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 13px; min-width: 16px; text-align: center; color: var(--ink); }
 
   .menu-days { display: grid; gap: 10px; margin-bottom: 28px; }
   .day-card { background: var(--bg-soft); border: 1px solid rgba(237,228,211,0.08); border-radius: 12px; padding: 18px 20px; display: grid; grid-template-columns: 70px 1fr; gap: 16px; align-items: baseline; }
   .day-name { font-family: 'Space Grotesk', sans-serif; font-weight: 700; color: var(--mustard); font-size: 14px; }
   .day-meals { font-size: 14px; line-height: 1.7; color: rgba(237,228,211,0.85); }
   .day-meals b { color: var(--paper-soft); font-weight: 600; }
+  .meals-legend { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: rgba(237,228,211,0.4); margin-bottom: 14px; letter-spacing: 0.03em; }
 
   .receipt-shell { display: flex; justify-content: center; }
   .receipt {
@@ -77,20 +93,22 @@
   .receipt-title { text-align: center; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 4px; }
   .receipt-sub { text-align: center; color: var(--ink-soft); font-size: 11px; margin-bottom: 16px; }
   .receipt hr { border: none; border-top: 1px dashed var(--line); margin: 12px 0; }
-  .receipt-line { display: flex; justify-content: space-between; gap: 10px; padding: 3px 0; opacity: 0; animation: lineIn 0.35s ease forwards; }
-  .receipt-line .name { flex: 1; }
-  .receipt-line .price { font-weight: 600; white-space: nowrap; }
-  .receipt-line .rm { cursor: pointer; color: var(--tomato); margin-left: 8px; font-weight: 700; }
-  .receipt-line.error { color: var(--tomato); font-style: italic; }
-  @keyframes lineIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
   .receipt-total { display: flex; justify-content: space-between; font-weight: 700; font-size: 16px; margin-top: 10px; }
   .receipt-barcode { margin-top: 18px; text-align: center; font-size: 22px; letter-spacing: 2px; color: var(--ink-soft); }
   .receipt-empty { text-align: center; color: var(--ink-soft); font-style: italic; padding: 10px 0; }
 
+  /* Loading skeleton */
+  .receipt-loading { padding: 20px 0; }
+  .skel { height: 14px; border-radius: 4px; background: linear-gradient(90deg, var(--line) 25%, rgba(43,38,32,0.08) 50%, var(--line) 75%); background-size: 200% 100%; animation: shimmer 1.2s infinite; margin: 10px 0; }
+  .skel.short { width: 55%; }
+  .skel.med { width: 75%; }
+  .skel.long { width: 90%; }
+  @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
   .actions { display: flex; gap: 10px; justify-content: center; margin-top: 22px; flex-wrap: wrap; }
-  .btn-copy, .btn-again { font-family: 'Inter', sans-serif; font-weight: 600; font-size: 13.5px; padding: 11px 18px; border-radius: 8px; cursor: pointer; border: 1px solid rgba(237,228,211,0.25); background: transparent; color: var(--paper-soft); }
+  .btn-copy, .btn-copy-txt, .btn-again { font-family: 'Inter', sans-serif; font-weight: 600; font-size: 13.5px; padding: 11px 18px; border-radius: 8px; cursor: pointer; border: 1px solid rgba(237,228,211,0.25); background: transparent; color: var(--paper-soft); }
   .btn-copy { border-color: var(--mustard); color: var(--mustard); }
-  .btn-copy.copied { background: var(--mustard); color: #2B2013; }
+  .btn-copy.copied, .btn-copy-txt.copied { background: var(--mustard); color: #2B2013; border-color: var(--mustard); }
 
   .empty-state { text-align: center; padding: 60px 20px; color: rgba(237,228,211,0.4); font-size: 14px; }
   .loading { text-align: center; padding: 40px 20px; color: var(--mustard); font-family: 'IBM Plex Mono', monospace; font-size: 13px; }
@@ -125,10 +143,8 @@
         <p class="search-error" id="searchError" style="display:none;"></p>
         <p class="disclaimer">Precios en directo desde Mercadona (proxy propio, sin login).<br>Esto no compra nada por ti — copia la lista en la app de Mercadona para pedirlo.</p>
       </section>
-      <section>
-        <div id="searchResults">
-          <div class="empty-state">Tu lista aparecerá aquí →</div>
-        </div>
+      <section id="searchResults">
+        <div class="empty-state">Tu lista aparecerá aquí →</div>
       </section>
     </div>
   </div>
@@ -168,10 +184,8 @@
         </form>
         <p class="disclaimer">Precios en directo desde Mercadona (proxy propio, sin login).<br>Esto no compra nada por ti — copia la lista en la app de Mercadona para pedirlo.</p>
       </section>
-      <section>
-        <div id="menuResults">
-          <div class="empty-state">Tu menú y tu lista de la compra aparecerán aquí →</div>
-        </div>
+      <section id="menuResults">
+        <div class="empty-state">Tu menú y tu lista de la compra aparecerán aquí →</div>
       </section>
     </div>
   </div>
@@ -191,50 +205,85 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 });
 
 /* ---------- Búsqueda libre ---------- */
-let basket = []; // { term, name, price, id }
+// basket: { term, name, price, id, thumbnail, qty }
+let basket = JSON.parse(localStorage.getItem('cv_basket') || '[]');
+
 const searchInput = document.getElementById('searchInput');
 const searchAddBtn = document.getElementById('searchAddBtn');
 const searchError = document.getElementById('searchError');
 const searchResultsEl = document.getElementById('searchResults');
 
+function saveBasket() {
+  localStorage.setItem('cv_basket', JSON.stringify(basket));
+}
+
 async function addTerm(term) {
   if (!term.trim()) return;
   searchAddBtn.disabled = true;
-  searchAddBtn.textContent = 'Buscando…';
+  searchAddBtn.textContent = '…';
   searchError.style.display = 'none';
   try {
     const res = await fetch('/api/search?q=' + encodeURIComponent(term));
     const data = await res.json();
     if (data.error) {
-      searchError.textContent = 'Sin resultados para "' + term + '"';
+      searchError.textContent = '❌ Sin resultados para "' + term + '"';
       searchError.style.display = 'block';
     } else {
-      basket.push({ term, name: data.name, price: data.price, id: data.id });
+      basket.push({ term, name: data.name, price: data.price, id: data.id, thumbnail: data.thumbnail || '', qty: 1 });
       searchInput.value = '';
+      saveBasket();
       renderBasket();
     }
-  } catch (err) {
+  } catch {
     searchError.textContent = 'No se ha podido conectar con el servidor de precios.';
     searchError.style.display = 'block';
   }
   searchAddBtn.disabled = false;
   searchAddBtn.textContent = 'Añadir';
+  searchInput.focus();
 }
 
 searchAddBtn.addEventListener('click', () => addTerm(searchInput.value));
 searchInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); addTerm(searchInput.value); } });
+
+function changeQty(i, delta) {
+  basket[i].qty = Math.max(1, (basket[i].qty || 1) + delta);
+  saveBasket();
+  renderBasket();
+}
+
+function removeItem(i) {
+  basket.splice(i, 1);
+  saveBasket();
+  renderBasket();
+}
 
 function renderBasket() {
   if (basket.length === 0) {
     searchResultsEl.innerHTML = '<div class="empty-state">Tu lista aparecerá aquí →</div>';
     return;
   }
-  const total = basket.reduce((s, it) => s + (it.price || 0), 0);
-  const lines = basket.map((it, i) => `
+  const total = basket.reduce((s, it) => s + (it.price || 0) * (it.qty || 1), 0);
+  const lines = basket.map((it, i) => {
+    const lineTotal = ((it.price || 0) * (it.qty || 1)).toFixed(2);
+    const thumb = it.thumbnail
+      ? `<img class="thumb" src="${it.thumbnail}" alt="" loading="lazy">`
+      : `<span class="thumb"></span>`;
+    return `
     <div class="receipt-line" style="animation-delay:${i * 0.05}s">
+      ${thumb}
       <span class="name">${it.name}</span>
-      <span class="price">${it.price.toFixed(2)}€<span class="rm" onclick="removeItem(${i})">✕</span></span>
-    </div>`).join('');
+      <div class="qty-ctrl">
+        <button class="qty-btn" onclick="changeQty(${i},-1)">−</button>
+        <span class="qty-num">${it.qty || 1}</span>
+        <button class="qty-btn" onclick="changeQty(${i},1)">+</button>
+      </div>
+      <div class="price-col">
+        <span class="price">${lineTotal}€</span>
+        <span class="rm" onclick="removeItem(${i})">✕</span>
+      </div>
+    </div>`;
+  }).join('');
 
   searchResultsEl.innerHTML = `
     <div class="receipt-shell">
@@ -249,22 +298,221 @@ function renderBasket() {
       </div>
     </div>
     <div class="actions">
-      <button class="btn-copy" id="copySearchBtn">Copiar lista</button>
-      <button class="btn-again" onclick="basket=[]; renderBasket();">Vaciar</button>
+      <button class="btn-copy" id="copySearchBtn">Copiar para Mercadona</button>
+      <button class="btn-copy-txt" id="copyPricesBtn">Copiar con precios</button>
+      <button class="btn-again" onclick="basket=[]; saveBasket(); renderBasket();">Vaciar</button>
     </div>`;
 
   document.getElementById('copySearchBtn').addEventListener('click', () => {
-    const text = basket.map(it => it.name).join('\n');
-    navigator.clipboard.writeText(text).then(() => {
-      const b = document.getElementById('copySearchBtn');
-      b.textContent = 'Copiado ✓'; b.classList.add('copied');
-      setTimeout(() => { b.textContent = 'Copiar lista'; b.classList.remove('copied'); }, 1800);
+    const text = basket.map(it => (it.qty > 1 ? `${it.name} ×${it.qty}` : it.name)).join('\n');
+    copyAndFlash(text, 'copySearchBtn', 'Copiar para Mercadona');
+  });
+  document.getElementById('copyPricesBtn').addEventListener('click', () => {
+    const lines = basket.map(it => {
+      const total = ((it.price || 0) * (it.qty || 1)).toFixed(2);
+      const q = it.qty > 1 ? ` ×${it.qty}` : '';
+      return `${it.name}${q}  ${total}€`;
     });
+    const total = basket.reduce((s, it) => s + (it.price || 0) * (it.qty || 1), 0);
+    const text = lines.join('\n') + `\n${'─'.repeat(28)}\nTOTAL  ${total.toFixed(2)}€`;
+    copyAndFlash(text, 'copyPricesBtn', 'Copiar con precios');
   });
 }
-function removeItem(i) { basket.splice(i, 1); renderBasket(); }
 
-/* ---------- Generador de menú genérico ---------- */
+function copyAndFlash(text, btnId, label) {
+  navigator.clipboard.writeText(text).then(() => {
+    const b = document.getElementById(btnId);
+    if (!b) return;
+    b.textContent = 'Copiado ✓'; b.classList.add('copied');
+    setTimeout(() => { b.textContent = label; b.classList.remove('copied'); }, 1800);
+  });
+}
+
+// Renderiza la cesta guardada al cargar
+if (basket.length > 0) renderBasket();
+
+/* ---------- Generador de menú ---------- */
+// qty = unidades del producto vendido por Mercadona necesarias por persona/semana
+// unidades_a_comprar = Math.ceil(qty * personas)
+const GOALS = {
+  equilibrado: {
+    label: 'Equilibrado',
+    days: [
+      { day: 'Lun', meals: '<b>Des:</b> huevos + fruta · <b>Com:</b> pollo + arroz + verdura · <b>Cen:</b> pescado + ensalada' },
+      { day: 'Mar', meals: '<b>Des:</b> yogur + avena · <b>Com:</b> salmón + boniato + brócoli · <b>Cen:</b> tortilla + tomate' },
+      { day: 'Mié', meals: '<b>Des:</b> huevos + fruta · <b>Com:</b> pollo + arroz + espinacas · <b>Cen:</b> queso fresco + ensalada' },
+      { day: 'Jue', meals: '<b>Des:</b> yogur + avena · <b>Com:</b> pescado + boniato · <b>Cen:</b> huevos + verdura' },
+      { day: 'Vie', meals: '<b>Des:</b> huevos + fruta · <b>Com:</b> pollo + verdura + arroz · <b>Cen:</b> ensalada completa' },
+      { day: 'Sáb', meals: '<b>Des:</b> yogur + avena · <b>Com:</b> salmón + verdura · <b>Cen:</b> tortilla + tomate' },
+      { day: 'Dom', meals: '<b>Des:</b> huevos + fruta · <b>Com:</b> pollo al horno + boniato · <b>Cen:</b> queso fresco + ensalada' },
+    ],
+    easy: [
+      { term: 'pollo horno listo', qty: 1 },
+      { term: 'salmón ahumado', qty: 0.5 },
+      { term: 'huevos', qty: 0.5 },
+      { term: 'avena', qty: 0.25 },
+      { term: 'arroz microondas', qty: 0.5 },
+      { term: 'boniato', qty: 0.5 },
+      { term: 'brócoli congelado', qty: 0.5 },
+      { term: 'espinacas', qty: 0.5 },
+      { term: 'yogur natural', qty: 1 },
+      { term: 'plátano', qty: 1 },
+      { term: 'tomate', qty: 0.5 },
+      { term: 'aceite oliva virgen extra', qty: 0.25 },
+    ],
+    std: [
+      { term: 'pechuga pollo', qty: 1 },
+      { term: 'salmón', qty: 0.5 },
+      { term: 'huevos', qty: 0.5 },
+      { term: 'avena', qty: 0.25 },
+      { term: 'arroz', qty: 0.25 },
+      { term: 'boniato', qty: 0.5 },
+      { term: 'brócoli', qty: 0.5 },
+      { term: 'espinacas', qty: 0.5 },
+      { term: 'yogur natural', qty: 1 },
+      { term: 'plátano', qty: 1 },
+      { term: 'tomate', qty: 0.5 },
+      { term: 'aceite oliva virgen extra', qty: 0.25 },
+    ],
+  },
+  proteina: {
+    label: 'Alto en proteína',
+    days: [
+      { day: 'Lun', meals: '<b>Des:</b> claras + yogur griego · <b>Com:</b> pechuga pollo + arroz · <b>Cen:</b> atún + huevo' },
+      { day: 'Mar', meals: '<b>Des:</b> yogur griego + almendras · <b>Com:</b> salmón + arroz · <b>Cen:</b> pollo + queso fresco' },
+      { day: 'Mié', meals: '<b>Des:</b> claras + avena · <b>Com:</b> pechuga pollo + boniato · <b>Cen:</b> atún + tomate' },
+      { day: 'Jue', meals: '<b>Des:</b> yogur griego + almendras · <b>Com:</b> salmón + verdura · <b>Cen:</b> huevos + queso fresco' },
+      { day: 'Vie', meals: '<b>Des:</b> claras + avena · <b>Com:</b> pechuga pollo + arroz · <b>Cen:</b> atún + ensalada' },
+      { day: 'Sáb', meals: '<b>Des:</b> yogur griego + almendras · <b>Com:</b> salmón + boniato · <b>Cen:</b> pollo + queso fresco' },
+      { day: 'Dom', meals: '<b>Des:</b> claras + avena · <b>Com:</b> pechuga pollo + arroz · <b>Cen:</b> huevos + atún' },
+    ],
+    easy: [
+      { term: 'pollo horno listo', qty: 1 },
+      { term: 'atún lata', qty: 1 },
+      { term: 'huevos', qty: 0.5 },
+      { term: 'yogur griego natural', qty: 1 },
+      { term: 'queso fresco batido', qty: 0.5 },
+      { term: 'almendras', qty: 0.25 },
+      { term: 'salmón ahumado', qty: 0.5 },
+      { term: 'arroz microondas', qty: 0.5 },
+      { term: 'avena', qty: 0.25 },
+    ],
+    std: [
+      { term: 'pechuga pollo', qty: 1 },
+      { term: 'atún', qty: 1 },
+      { term: 'huevos', qty: 0.5 },
+      { term: 'yogur griego natural', qty: 1 },
+      { term: 'queso fresco batido', qty: 0.5 },
+      { term: 'almendras', qty: 0.25 },
+      { term: 'salmón', qty: 0.5 },
+      { term: 'arroz', qty: 0.25 },
+      { term: 'avena', qty: 0.25 },
+    ],
+  },
+  ligero: {
+    label: 'Ligero / bajo en calorías',
+    days: [
+      { day: 'Lun', meals: '<b>Des:</b> yogur desnatado + fruta · <b>Com:</b> pescado blanco + verdura · <b>Cen:</b> ensalada de pavo' },
+      { day: 'Mar', meals: '<b>Des:</b> huevo + fruta · <b>Com:</b> pavo + verdura salteada · <b>Cen:</b> sopa + huevo' },
+      { day: 'Mié', meals: '<b>Des:</b> yogur desnatado + fruta · <b>Com:</b> pescado blanco + ensalada · <b>Cen:</b> pavo + verdura' },
+      { day: 'Jue', meals: '<b>Des:</b> huevo + fruta · <b>Com:</b> pavo + verdura · <b>Cen:</b> ensalada de atún' },
+      { day: 'Vie', meals: '<b>Des:</b> yogur desnatado + fruta · <b>Com:</b> pescado blanco + verdura · <b>Cen:</b> tortilla ligera' },
+      { day: 'Sáb', meals: '<b>Des:</b> yogur desnatado + fruta · <b>Com:</b> pavo + ensalada · <b>Cen:</b> atún + tomate' },
+      { day: 'Dom', meals: '<b>Des:</b> huevo + fruta · <b>Com:</b> pescado blanco + verdura · <b>Cen:</b> ensalada completa' },
+    ],
+    easy: [
+      { term: 'pechuga pavo loncha', qty: 0.5 },
+      { term: 'merluza congelada', qty: 1 },
+      { term: 'huevos', qty: 0.5 },
+      { term: 'yogur desnatado', qty: 1 },
+      { term: 'ensalada bolsa', qty: 0.5 },
+      { term: 'tomate', qty: 0.5 },
+      { term: 'atún al natural', qty: 1 },
+      { term: 'brócoli congelado', qty: 0.5 },
+      { term: 'manzana', qty: 1 },
+    ],
+    std: [
+      { term: 'pechuga pavo', qty: 0.5 },
+      { term: 'merluza', qty: 1 },
+      { term: 'huevos', qty: 0.5 },
+      { term: 'yogur desnatado', qty: 1 },
+      { term: 'lechuga', qty: 0.5 },
+      { term: 'tomate', qty: 0.5 },
+      { term: 'atún al natural', qty: 1 },
+      { term: 'brócoli', qty: 0.5 },
+      { term: 'manzana', qty: 1 },
+    ],
+  },
+  vegetariano: {
+    label: 'Vegetariano',
+    days: [
+      { day: 'Lun', meals: '<b>Des:</b> yogur + avena · <b>Com:</b> lentejas + arroz · <b>Cen:</b> tortilla + verdura' },
+      { day: 'Mar', meals: '<b>Des:</b> huevos + fruta · <b>Com:</b> tofu + verdura salteada · <b>Cen:</b> queso fresco + tomate' },
+      { day: 'Mié', meals: '<b>Des:</b> yogur + almendras · <b>Com:</b> garbanzos + arroz · <b>Cen:</b> huevos + espinacas' },
+      { day: 'Jue', meals: '<b>Des:</b> huevos + fruta · <b>Com:</b> tofu + verdura · <b>Cen:</b> queso fresco + ensalada' },
+      { day: 'Vie', meals: '<b>Des:</b> yogur + avena · <b>Com:</b> lentejas + verdura · <b>Cen:</b> tortilla + tomate' },
+      { day: 'Sáb', meals: '<b>Des:</b> yogur + almendras · <b>Com:</b> garbanzos + verdura · <b>Cen:</b> huevos + ensalada' },
+      { day: 'Dom', meals: '<b>Des:</b> huevos + fruta · <b>Com:</b> lentejas + arroz · <b>Cen:</b> queso fresco + tomate' },
+    ],
+    easy: [
+      { term: 'lentejas cocidas', qty: 0.5 },
+      { term: 'garbanzos cocidos', qty: 0.5 },
+      { term: 'tofu', qty: 0.5 },
+      { term: 'huevos', qty: 0.5 },
+      { term: 'queso fresco batido', qty: 0.5 },
+      { term: 'yogur natural', qty: 1 },
+      { term: 'almendras', qty: 0.25 },
+      { term: 'arroz microondas', qty: 0.5 },
+      { term: 'espinacas congeladas', qty: 0.5 },
+    ],
+    std: [
+      { term: 'lentejas', qty: 0.5 },
+      { term: 'garbanzos', qty: 0.5 },
+      { term: 'tofu', qty: 0.5 },
+      { term: 'huevos', qty: 0.5 },
+      { term: 'queso fresco batido', qty: 0.5 },
+      { term: 'yogur natural', qty: 1 },
+      { term: 'almendras', qty: 0.25 },
+      { term: 'arroz', qty: 0.25 },
+      { term: 'espinacas', qty: 0.5 },
+    ],
+  },
+  familiar: {
+    label: 'Familiar / rápido',
+    days: [
+      { day: 'Lun', meals: '<b>Com:</b> pasta con tomate y pollo · <b>Cen:</b> tortilla de patatas' },
+      { day: 'Mar', meals: '<b>Com:</b> arroz con verdura y pollo · <b>Cen:</b> pizza casera' },
+      { day: 'Mié', meals: '<b>Com:</b> pasta con atún · <b>Cen:</b> huevos con patatas' },
+      { day: 'Jue', meals: '<b>Com:</b> pollo al horno con patatas · <b>Cen:</b> ensalada con queso' },
+      { day: 'Vie', meals: '<b>Com:</b> arroz con pollo · <b>Cen:</b> pizza o pasta (a elegir)' },
+      { day: 'Sáb', meals: '<b>Com:</b> pollo asado con patatas · <b>Cen:</b> tortilla + ensalada' },
+      { day: 'Dom', meals: '<b>Com:</b> pasta gratinada con queso · <b>Cen:</b> huevos + pan' },
+    ],
+    easy: [
+      { term: 'pasta', qty: 0.5 },
+      { term: 'tomate frito', qty: 0.5 },
+      { term: 'pollo horno listo', qty: 1 },
+      { term: 'arroz microondas', qty: 0.5 },
+      { term: 'verdura congelada', qty: 0.5 },
+      { term: 'huevos', qty: 0.5 },
+      { term: 'patatas congeladas', qty: 0.5 },
+      { term: 'queso rallado', qty: 0.25 },
+      { term: 'pan', qty: 1 },
+    ],
+    std: [
+      { term: 'pasta', qty: 0.5 },
+      { term: 'tomate frito', qty: 0.5 },
+      { term: 'pechuga pollo', qty: 1 },
+      { term: 'arroz', qty: 0.25 },
+      { term: 'verdura congelada', qty: 0.5 },
+      { term: 'huevos', qty: 0.5 },
+      { term: 'patatas', qty: 0.5 },
+      { term: 'queso rallado', qty: 0.25 },
+      { term: 'pan', qty: 1 },
+    ],
+  },
+};
+
 const menuState = { goal: 'equilibrado', skill: '0', people: '1' };
 document.querySelectorAll('#menuForm .options').forEach(group => {
   group.addEventListener('click', (e) => {
@@ -276,82 +524,36 @@ document.querySelectorAll('#menuForm .options').forEach(group => {
   });
 });
 
-const GOALS = {
-  equilibrado: {
-    label: 'Equilibrado',
-    days: [
-      { day: 'Lun', meals: '<b>D:</b> huevos + fruta · <b>C:</b> pollo + arroz + verdura · <b>C:</b> pescado + ensalada' },
-      { day: 'Mar', meals: '<b>D:</b> yogur + avena · <b>C:</b> salmón + boniato + brócoli · <b>C:</b> tortilla + tomate' },
-      { day: 'Mié', meals: '<b>D:</b> huevos + fruta · <b>C:</b> pollo + arroz + espinacas · <b>C:</b> queso fresco + ensalada' },
-      { day: 'Jue', meals: '<b>D:</b> yogur + avena · <b>C:</b> pescado + boniato · <b>C:</b> huevos + verdura' },
-      { day: 'Vie', meals: '<b>D:</b> huevos + fruta · <b>C:</b> pollo + verdura + arroz · <b>C:</b> ensalada completa' },
-    ],
-    easy: ['pollo horno listo', 'salmón ahumado', 'huevos', 'avena', 'arroz microondas', 'boniato', 'brócoli congelado', 'espinacas', 'yogur natural', 'plátano', 'tomate', 'aceite oliva virgen extra'],
-    std:  ['pechuga pollo', 'salmón', 'huevos', 'avena', 'arroz', 'boniato', 'brócoli', 'espinacas', 'yogur natural', 'plátano', 'tomate', 'aceite oliva virgen extra'],
-  },
-  proteina: {
-    label: 'Alto en proteína',
-    days: [
-      { day: 'Lun', meals: '<b>D:</b> claras + yogur griego · <b>C:</b> pechuga pollo + arroz · <b>C:</b> atún + huevo' },
-      { day: 'Mar', meals: '<b>D:</b> yogur griego + almendras · <b>C:</b> salmón + arroz · <b>C:</b> pollo + queso fresco' },
-      { day: 'Mié', meals: '<b>D:</b> claras + avena · <b>C:</b> pechuga pollo + boniato · <b>C:</b> atún + tomate' },
-      { day: 'Jue', meals: '<b>D:</b> yogur griego + almendras · <b>C:</b> salmón + verdura · <b>C:</b> huevos + queso fresco' },
-      { day: 'Vie', meals: '<b>D:</b> claras + avena · <b>C:</b> pechuga pollo + arroz · <b>C:</b> atún + ensalada' },
-    ],
-    easy: ['pollo horno listo', 'atún lata', 'huevos', 'yogur griego natural', 'queso fresco batido', 'almendras', 'salmón ahumado', 'arroz microondas', 'avena'],
-    std:  ['pechuga pollo', 'atún', 'huevos', 'yogur griego natural', 'queso fresco batido', 'almendras', 'salmón', 'arroz', 'avena'],
-  },
-  ligero: {
-    label: 'Ligero / bajo en calorías',
-    days: [
-      { day: 'Lun', meals: '<b>D:</b> yogur desnatado + fruta · <b>C:</b> pescado blanco + verdura · <b>C:</b> ensalada de pavo' },
-      { day: 'Mar', meals: '<b>D:</b> huevo + fruta · <b>C:</b> pavo + verdura salteada · <b>C:</b> sopa + huevo' },
-      { day: 'Mié', meals: '<b>D:</b> yogur desnatado + fruta · <b>C:</b> pescado blanco + ensalada · <b>C:</b> pavo + verdura' },
-      { day: 'Jue', meals: '<b>D:</b> huevo + fruta · <b>C:</b> pavo + verdura · <b>C:</b> ensalada de atún' },
-      { day: 'Vie', meals: '<b>D:</b> yogur desnatado + fruta · <b>C:</b> pescado blanco + verdura · <b>C:</b> tortilla ligera' },
-    ],
-    easy: ['pechuga pavo loncha', 'merluza congelada', 'huevos', 'yogur desnatado', 'ensalada bolsa', 'tomate', 'atún al natural', 'brócoli congelado', 'manzana'],
-    std:  ['pechuga pavo', 'merluza', 'huevos', 'yogur desnatado', 'lechuga', 'tomate', 'atún al natural', 'brócoli', 'manzana'],
-  },
-  vegetariano: {
-    label: 'Vegetariano',
-    days: [
-      { day: 'Lun', meals: '<b>D:</b> yogur + avena · <b>C:</b> lentejas + arroz · <b>C:</b> tortilla + verdura' },
-      { day: 'Mar', meals: '<b>D:</b> huevos + fruta · <b>C:</b> tofu + verdura salteada · <b>C:</b> queso fresco + tomate' },
-      { day: 'Mié', meals: '<b>D:</b> yogur + almendras · <b>C:</b> garbanzos + arroz · <b>C:</b> huevos + espinacas' },
-      { day: 'Jue', meals: '<b>D:</b> huevos + fruta · <b>C:</b> tofu + verdura · <b>C:</b> queso fresco + ensalada' },
-      { day: 'Vie', meals: '<b>D:</b> yogur + avena · <b>C:</b> lentejas + verdura · <b>C:</b> tortilla + tomate' },
-    ],
-    easy: ['lentejas cocidas', 'garbanzos cocidos', 'tofu', 'huevos', 'queso fresco batido', 'yogur natural', 'almendras', 'arroz microondas', 'espinacas congeladas'],
-    std:  ['lentejas', 'garbanzos', 'tofu', 'huevos', 'queso fresco batido', 'yogur natural', 'almendras', 'arroz', 'espinacas'],
-  },
-  familiar: {
-    label: 'Familiar / rápido',
-    days: [
-      { day: 'Lun', meals: '<b>C:</b> pasta con tomate y pollo · <b>C:</b> tortilla de patatas' },
-      { day: 'Mar', meals: '<b>C:</b> arroz con verdura y pollo · <b>C:</b> pizza casera' },
-      { day: 'Mié', meals: '<b>C:</b> pasta con atún · <b>C:</b> huevos con patatas' },
-      { day: 'Jue', meals: '<b>C:</b> pollo al horno con patatas · <b>C:</b> ensalada con queso' },
-      { day: 'Vie', meals: '<b>C:</b> arroz con pollo · <b>C:</b> pizza o pasta (a elegir)' },
-    ],
-    easy: ['pasta', 'tomate frito', 'pollo horno listo', 'arroz microondas', 'verdura congelada', 'huevos', 'patatas congeladas', 'queso rallado', 'pan'],
-    std:  ['pasta', 'tomate frito', 'pechuga pollo', 'arroz', 'verdura congelada', 'huevos', 'patatas', 'queso rallado', 'pan'],
-  },
-};
-
 const menuForm = document.getElementById('menuForm');
 const menuResultsEl = document.getElementById('menuResults');
 const menuBtn = document.getElementById('menuGenerateBtn');
+
+// Skeleton de carga visual
+function showMenuSkeleton() {
+  menuResultsEl.innerHTML = `
+    <div class="receipt-shell">
+      <div class="receipt">
+        <div class="receipt-title" style="opacity:.4">Consultando precios…</div>
+        <div class="receipt-loading">
+          ${Array.from({length: 8}, (_, i) => `<div class="skel ${['long','med','short','long','med','long','short','med'][i]}"></div>`).join('')}
+        </div>
+        <hr style="margin-top:16px">
+        <div class="skel short" style="height:18px;margin-top:12px"></div>
+      </div>
+    </div>`;
+}
 
 menuForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   menuBtn.disabled = true;
   menuBtn.textContent = 'Consultando precios reales…';
-  menuResultsEl.innerHTML = '<div class="loading">Buscando precios en Mercadona…</div>';
+  showMenuSkeleton();
+  menuResultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
   const goalData = GOALS[menuState.goal];
-  const terms = menuState.skill === '0' ? goalData.easy : goalData.std;
-  const scale = parseInt(menuState.people, 10) / 1;
+  const people = parseInt(menuState.people, 10);
+  const ingredientes = menuState.skill === '0' ? goalData.easy : goalData.std;
+  const unidades = ingredientes.map(ing => Math.max(1, Math.ceil(ing.qty * people)));
 
   let items = [];
   let total = 0;
@@ -359,13 +561,13 @@ menuForm.addEventListener('submit', async (e) => {
     const res = await fetch('/api/batch', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ terms }),
+      body: JSON.stringify({ terms: ingredientes.map(ing => ing.term) }),
     });
     const data = await res.json();
-    items = data.items || [];
-    total = items.reduce((sum, it) => sum + (it.price ? it.price * scale : 0), 0);
-  } catch (err) {
-    menuResultsEl.innerHTML = '<div class="empty-state">No se ha podido conectar con el servidor de precios. ¿Está desplegado el backend?</div>';
+    items = (data.items || []).map((it, i) => ({ ...it, units: unidades[i] }));
+    total = items.reduce((sum, it) => sum + (it.price ? it.price * it.units : 0), 0);
+  } catch {
+    menuResultsEl.innerHTML = '<div class="empty-state">No se ha podido conectar con el servidor de precios.</div>';
     menuBtn.disabled = false;
     menuBtn.textContent = 'Generar mi compra semanal';
     return;
@@ -375,39 +577,54 @@ menuForm.addEventListener('submit', async (e) => {
     <div class="day-card"><div class="day-name">${d.day}</div><div class="day-meals">${d.meals}</div></div>`).join('');
 
   const linesHtml = items.map((it, i) => {
-    if (it.error) return `<div class="receipt-line error" style="animation-delay:${i * 0.06}s">${it.term} — sin resultado</div>`;
-    const qty = scale > 1 ? ` x${scale}` : '';
-    const price = (it.price * scale).toFixed(2);
-    return `<div class="receipt-line" style="animation-delay:${i * 0.06}s"><span class="name">${it.name}${qty}</span><span class="price">${price}€</span></div>`;
+    if (it.error) return `<div class="receipt-line error" style="animation-delay:${i * 0.06}s"><span class="name">${it.term} — sin resultado</span></div>`;
+    const qtyLabel = it.units > 1 ? ` ×${it.units}` : '';
+    const price = (it.price * it.units).toFixed(2);
+    return `<div class="receipt-line" style="animation-delay:${i * 0.06}s">
+      <span class="name">${it.name}${qtyLabel}</span>
+      <div class="price-col"><span class="price">${price}€</span></div>
+    </div>`;
   }).join('');
 
+  const personasLabel = `${people} persona${people > 1 ? 's' : ''}`;
   menuResultsEl.innerHTML = `
+    <div class="meals-legend">Des = desayuno · Com = comida · Cen = cena</div>
     <div class="menu-days">${daysHtml}</div>
     <div class="receipt-shell">
       <div class="receipt">
         <div class="receipt-title">Lista de la compra — ${goalData.label}</div>
-        <div class="receipt-sub">${new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })} · Mercadona</div>
+        <div class="receipt-sub">${new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })} · ${personasLabel} · Mercadona</div>
         <hr>${linesHtml}<hr>
         <div class="receipt-total"><span>TOTAL</span><span>${total.toFixed(2)}€</span></div>
         <div class="receipt-barcode">▌▌│▌│▌▌▌│▌▌│▌▌▌│▌▌</div>
       </div>
     </div>
     <div class="actions">
-      <button class="btn-copy" id="copyMenuBtn">Copiar lista</button>
+      <button class="btn-copy" id="copyMenuBtn">Copiar para Mercadona</button>
+      <button class="btn-copy-txt" id="copyMenuPricesBtn">Copiar con precios</button>
       <button class="btn-again" onclick="window.scrollTo({top:0,behavior:'smooth'})">Ajustar de nuevo</button>
     </div>`;
 
   document.getElementById('copyMenuBtn').addEventListener('click', () => {
-    const text = items.filter(it => !it.error).map(it => it.name).join('\n');
-    navigator.clipboard.writeText(text).then(() => {
-      const b = document.getElementById('copyMenuBtn');
-      b.textContent = 'Copiado ✓'; b.classList.add('copied');
-      setTimeout(() => { b.textContent = 'Copiar lista'; b.classList.remove('copied'); }, 1800);
+    const text = items.filter(it => !it.error).map(it => {
+      const q = it.units > 1 ? ` ×${it.units}` : '';
+      return `${it.name}${q}`;
+    }).join('\n');
+    copyAndFlash(text, 'copyMenuBtn', 'Copiar para Mercadona');
+  });
+
+  document.getElementById('copyMenuPricesBtn').addEventListener('click', () => {
+    const lines = items.filter(it => !it.error).map(it => {
+      const q = it.units > 1 ? ` ×${it.units}` : '';
+      return `${it.name}${q}  ${(it.price * it.units).toFixed(2)}€`;
     });
+    const text = lines.join('\n') + `\n${'─'.repeat(30)}\nTOTAL  ${total.toFixed(2)}€`;
+    copyAndFlash(text, 'copyMenuPricesBtn', 'Copiar con precios');
   });
 
   menuBtn.disabled = false;
   menuBtn.textContent = 'Generar mi compra semanal';
+  menuResultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
 </script>
 </body>
