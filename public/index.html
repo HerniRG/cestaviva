@@ -411,186 +411,381 @@ function copyAndFlash(text, btnId, label) {
 if (basket.length > 0) renderBasket();
 
 /* ---------- Generador de menú ---------- */
-// qty = unidades del producto vendido por Mercadona necesarias por persona/semana
-// unidades_a_comprar = Math.ceil(qty * personas)
-const GOALS = {
-  equilibrado: {
-    label: 'Equilibrado',
-    days: [
-      { day: 'Lun', meals: '<b>Des:</b> huevos + fruta · <b>Com:</b> pollo + arroz + verdura · <b>Cen:</b> pescado + ensalada' },
-      { day: 'Mar', meals: '<b>Des:</b> yogur + avena · <b>Com:</b> salmón + boniato + brócoli · <b>Cen:</b> tortilla + tomate' },
-      { day: 'Mié', meals: '<b>Des:</b> huevos + fruta · <b>Com:</b> pollo + arroz + espinacas · <b>Cen:</b> queso fresco + ensalada' },
-      { day: 'Jue', meals: '<b>Des:</b> yogur + avena · <b>Com:</b> pescado + boniato · <b>Cen:</b> huevos + verdura' },
-      { day: 'Vie', meals: '<b>Des:</b> huevos + fruta · <b>Com:</b> pollo + verdura + arroz · <b>Cen:</b> ensalada completa' },
-      { day: 'Sáb', meals: '<b>Des:</b> yogur + avena · <b>Com:</b> salmón + verdura · <b>Cen:</b> tortilla + tomate' },
-      { day: 'Dom', meals: '<b>Des:</b> huevos + fruta · <b>Com:</b> pollo al horno + boniato · <b>Cen:</b> queso fresco + ensalada' },
-    ],
-    easy: [
-      { term: 'pollo horno listo', qty: 1 },
-      { term: 'salmón ahumado', qty: 0.5 },
-      { term: 'huevos', qty: 0.5 },
-      { term: 'avena', qty: 0.25 },
-      { term: 'arroz microondas', qty: 0.5 },
-      { term: 'boniato', qty: 0.5 },
-      { term: 'brócoli congelado', qty: 0.5 },
-      { term: 'espinacas', qty: 0.5 },
-      { term: 'yogur natural', qty: 1 },
-      { term: 'plátano', qty: 1 },
-      { term: 'tomate', qty: 0.5 },
-      { term: 'aceite oliva virgen extra', qty: 0.25 },
-    ],
-    std: [
-      { term: 'pechuga pollo', qty: 1 },
-      { term: 'salmón', qty: 0.5 },
-      { term: 'huevos', qty: 0.5 },
-      { term: 'avena', qty: 0.25 },
-      { term: 'arroz', qty: 0.25 },
-      { term: 'boniato', qty: 0.5 },
-      { term: 'brócoli', qty: 0.5 },
-      { term: 'espinacas', qty: 0.5 },
-      { term: 'yogur natural', qty: 1 },
-      { term: 'plátano', qty: 1 },
-      { term: 'tomate', qty: 0.5 },
-      { term: 'aceite oliva virgen extra', qty: 0.25 },
-    ],
-  },
-  proteina: {
-    label: 'Alto en proteína',
-    days: [
-      { day: 'Lun', meals: '<b>Des:</b> claras + yogur griego · <b>Com:</b> pechuga pollo + arroz · <b>Cen:</b> atún + huevo' },
-      { day: 'Mar', meals: '<b>Des:</b> yogur griego + almendras · <b>Com:</b> salmón + arroz · <b>Cen:</b> pollo + queso fresco' },
-      { day: 'Mié', meals: '<b>Des:</b> claras + avena · <b>Com:</b> pechuga pollo + boniato · <b>Cen:</b> atún + tomate' },
-      { day: 'Jue', meals: '<b>Des:</b> yogur griego + almendras · <b>Com:</b> salmón + verdura · <b>Cen:</b> huevos + queso fresco' },
-      { day: 'Vie', meals: '<b>Des:</b> claras + avena · <b>Com:</b> pechuga pollo + arroz · <b>Cen:</b> atún + ensalada' },
-      { day: 'Sáb', meals: '<b>Des:</b> yogur griego + almendras · <b>Com:</b> salmón + boniato · <b>Cen:</b> pollo + queso fresco' },
-      { day: 'Dom', meals: '<b>Des:</b> claras + avena · <b>Com:</b> pechuga pollo + arroz · <b>Cen:</b> huevos + atún' },
-    ],
-    easy: [
-      { term: 'pollo horno listo', qty: 1 },
-      { term: 'atún lata', qty: 1 },
-      { term: 'huevos', qty: 0.5 },
-      { term: 'yogur griego natural', qty: 1 },
-      { term: 'queso fresco batido', qty: 0.5 },
-      { term: 'almendras', qty: 0.25 },
-      { term: 'salmón ahumado', qty: 0.5 },
-      { term: 'arroz microondas', qty: 0.5 },
-      { term: 'avena', qty: 0.25 },
-    ],
-    std: [
-      { term: 'pechuga pollo', qty: 1 },
-      { term: 'atún', qty: 1 },
-      { term: 'huevos', qty: 0.5 },
-      { term: 'yogur griego natural', qty: 1 },
-      { term: 'queso fresco batido', qty: 0.5 },
-      { term: 'almendras', qty: 0.25 },
-      { term: 'salmón', qty: 0.5 },
-      { term: 'arroz', qty: 0.25 },
-      { term: 'avena', qty: 0.25 },
-    ],
-  },
-  ligero: {
-    label: 'Ligero / bajo en calorías',
-    days: [
-      { day: 'Lun', meals: '<b>Des:</b> yogur desnatado + fruta · <b>Com:</b> pescado blanco + verdura · <b>Cen:</b> ensalada de pavo' },
-      { day: 'Mar', meals: '<b>Des:</b> huevo + fruta · <b>Com:</b> pavo + verdura salteada · <b>Cen:</b> sopa + huevo' },
-      { day: 'Mié', meals: '<b>Des:</b> yogur desnatado + fruta · <b>Com:</b> pescado blanco + ensalada · <b>Cen:</b> pavo + verdura' },
-      { day: 'Jue', meals: '<b>Des:</b> huevo + fruta · <b>Com:</b> pavo + verdura · <b>Cen:</b> ensalada de atún' },
-      { day: 'Vie', meals: '<b>Des:</b> yogur desnatado + fruta · <b>Com:</b> pescado blanco + verdura · <b>Cen:</b> tortilla ligera' },
-      { day: 'Sáb', meals: '<b>Des:</b> yogur desnatado + fruta · <b>Com:</b> pavo + ensalada · <b>Cen:</b> atún + tomate' },
-      { day: 'Dom', meals: '<b>Des:</b> huevo + fruta · <b>Com:</b> pescado blanco + verdura · <b>Cen:</b> ensalada completa' },
-    ],
-    easy: [
-      { term: 'pechuga pavo loncha', qty: 0.5 },
-      { term: 'merluza congelada', qty: 1 },
-      { term: 'huevos', qty: 0.5 },
-      { term: 'yogur desnatado', qty: 1 },
-      { term: 'ensalada bolsa', qty: 0.5 },
-      { term: 'tomate', qty: 0.5 },
-      { term: 'atún al natural', qty: 1 },
-      { term: 'brócoli congelado', qty: 0.5 },
-      { term: 'manzana', qty: 1 },
-    ],
-    std: [
-      { term: 'pechuga pavo', qty: 0.5 },
-      { term: 'merluza', qty: 1 },
-      { term: 'huevos', qty: 0.5 },
-      { term: 'yogur desnatado', qty: 1 },
-      { term: 'lechuga', qty: 0.5 },
-      { term: 'tomate', qty: 0.5 },
-      { term: 'atún al natural', qty: 1 },
-      { term: 'brócoli', qty: 0.5 },
-      { term: 'manzana', qty: 1 },
-    ],
-  },
-  vegetariano: {
-    label: 'Vegetariano',
-    days: [
-      { day: 'Lun', meals: '<b>Des:</b> yogur + avena · <b>Com:</b> lentejas + arroz · <b>Cen:</b> tortilla + verdura' },
-      { day: 'Mar', meals: '<b>Des:</b> huevos + fruta · <b>Com:</b> tofu + verdura salteada · <b>Cen:</b> queso fresco + tomate' },
-      { day: 'Mié', meals: '<b>Des:</b> yogur + almendras · <b>Com:</b> garbanzos + arroz · <b>Cen:</b> huevos + espinacas' },
-      { day: 'Jue', meals: '<b>Des:</b> huevos + fruta · <b>Com:</b> tofu + verdura · <b>Cen:</b> queso fresco + ensalada' },
-      { day: 'Vie', meals: '<b>Des:</b> yogur + avena · <b>Com:</b> lentejas + verdura · <b>Cen:</b> tortilla + tomate' },
-      { day: 'Sáb', meals: '<b>Des:</b> yogur + almendras · <b>Com:</b> garbanzos + verdura · <b>Cen:</b> huevos + ensalada' },
-      { day: 'Dom', meals: '<b>Des:</b> huevos + fruta · <b>Com:</b> lentejas + arroz · <b>Cen:</b> queso fresco + tomate' },
-    ],
-    easy: [
-      { term: 'lentejas cocidas', qty: 0.5 },
-      { term: 'garbanzos cocidos', qty: 0.5 },
-      { term: 'tofu', qty: 0.5 },
-      { term: 'huevos', qty: 0.5 },
-      { term: 'queso fresco batido', qty: 0.5 },
-      { term: 'yogur natural', qty: 1 },
-      { term: 'almendras', qty: 0.25 },
-      { term: 'arroz microondas', qty: 0.5 },
-      { term: 'espinacas congeladas', qty: 0.5 },
-    ],
-    std: [
-      { term: 'lentejas', qty: 0.5 },
-      { term: 'garbanzos', qty: 0.5 },
-      { term: 'tofu', qty: 0.5 },
-      { term: 'huevos', qty: 0.5 },
-      { term: 'queso fresco batido', qty: 0.5 },
-      { term: 'yogur natural', qty: 1 },
-      { term: 'almendras', qty: 0.25 },
-      { term: 'arroz', qty: 0.25 },
-      { term: 'espinacas', qty: 0.5 },
-    ],
-  },
-  familiar: {
-    label: 'Familiar / rápido',
-    days: [
-      { day: 'Lun', meals: '<b>Com:</b> pasta con tomate y pollo · <b>Cen:</b> tortilla de patatas' },
-      { day: 'Mar', meals: '<b>Com:</b> arroz con verdura y pollo · <b>Cen:</b> pizza casera' },
-      { day: 'Mié', meals: '<b>Com:</b> pasta con atún · <b>Cen:</b> huevos con patatas' },
-      { day: 'Jue', meals: '<b>Com:</b> pollo al horno con patatas · <b>Cen:</b> ensalada con queso' },
-      { day: 'Vie', meals: '<b>Com:</b> arroz con pollo · <b>Cen:</b> pizza o pasta (a elegir)' },
-      { day: 'Sáb', meals: '<b>Com:</b> pollo asado con patatas · <b>Cen:</b> tortilla + ensalada' },
-      { day: 'Dom', meals: '<b>Com:</b> pasta gratinada con queso · <b>Cen:</b> huevos + pan' },
-    ],
-    easy: [
-      { term: 'pasta', qty: 0.5 },
-      { term: 'tomate frito', qty: 0.5 },
-      { term: 'pollo horno listo', qty: 1 },
-      { term: 'arroz microondas', qty: 0.5 },
-      { term: 'verdura congelada', qty: 0.5 },
-      { term: 'huevos', qty: 0.5 },
-      { term: 'patatas congeladas', qty: 0.5 },
-      { term: 'queso rallado', qty: 0.25 },
-      { term: 'pan', qty: 1 },
-    ],
-    std: [
-      { term: 'pasta', qty: 0.5 },
-      { term: 'tomate frito', qty: 0.5 },
-      { term: 'pechuga pollo', qty: 1 },
-      { term: 'arroz', qty: 0.25 },
-      { term: 'verdura congelada', qty: 0.5 },
-      { term: 'huevos', qty: 0.5 },
-      { term: 'patatas', qty: 0.5 },
-      { term: 'queso rallado', qty: 0.25 },
-      { term: 'pan', qty: 1 },
-    ],
-  },
+// 3 variantes por objetivo → rotación aleatoria en cada generación
+// Multiplicador ejercicio aplicado a qty antes de buscar precios
+const GOAL_VARIANTS = {
+  equilibrado: [
+    { label: 'Equilibrado', days: [
+        { day: 'Lun', meals: '<b>Des:</b> Huevos revueltos + tostada integral · <b>Com:</b> Pollo al horno + arroz + ensalada · <b>Cen:</b> Salmón a la plancha + espinacas' },
+        { day: 'Mar', meals: '<b>Des:</b> Yogur natural + avena + plátano · <b>Com:</b> Lentejas estofadas con zanahoria · <b>Cen:</b> Tortilla francesa + tomate' },
+        { day: 'Mié', meals: '<b>Des:</b> Huevos + fruta de temporada · <b>Com:</b> Pasta con pechuga y tomate · <b>Cen:</b> Merluza al vapor + brócoli' },
+        { day: 'Jue', meals: '<b>Des:</b> Yogur + muesli + fruta · <b>Com:</b> Arroz con pollo salteado y verdura · <b>Cen:</b> Revuelto de huevos + espinacas' },
+        { day: 'Vie', meals: '<b>Des:</b> Huevos + tostada integral · <b>Com:</b> Garbanzos con espinacas y tomate · <b>Cen:</b> Salmón + ensalada variada' },
+        { day: 'Sáb', meals: '<b>Des:</b> Yogur + avena + miel · <b>Com:</b> Pollo asado + boniato al horno · <b>Cen:</b> Queso fresco + tomate cherry' },
+        { day: 'Dom', meals: '<b>Des:</b> Huevos revueltos + zumo · <b>Com:</b> Merluza con patatas y verdura · <b>Cen:</b> Ensalada con atún y aguacate' },
+      ],
+      easy: [
+        { term: 'pollo horno listo', qty: 1 }, { term: 'salmón ahumado', qty: 0.5 }, { term: 'merluza congelada', qty: 0.5 },
+        { term: 'huevos', qty: 0.5 }, { term: 'yogur natural', qty: 1 }, { term: 'avena', qty: 0.25 },
+        { term: 'arroz microondas', qty: 0.5 }, { term: 'lentejas cocidas', qty: 0.5 }, { term: 'garbanzos cocidos', qty: 0.5 },
+        { term: 'espinacas congeladas', qty: 0.5 }, { term: 'brócoli congelado', qty: 0.5 },
+        { term: 'tomate', qty: 0.5 }, { term: 'plátano', qty: 1 }, { term: 'atún natural', qty: 0.5 },
+      ],
+      std: [
+        { term: 'pechuga pollo', qty: 1 }, { term: 'salmón', qty: 0.5 }, { term: 'merluza', qty: 0.5 },
+        { term: 'huevos', qty: 0.5 }, { term: 'yogur natural', qty: 1 }, { term: 'avena', qty: 0.25 },
+        { term: 'arroz', qty: 0.25 }, { term: 'lentejas', qty: 0.5 }, { term: 'garbanzos', qty: 0.5 },
+        { term: 'espinacas', qty: 0.5 }, { term: 'brócoli', qty: 0.5 },
+        { term: 'tomate', qty: 0.5 }, { term: 'plátano', qty: 1 }, { term: 'pasta integral', qty: 0.25 },
+      ],
+    },
+    { label: 'Equilibrado', days: [
+        { day: 'Lun', meals: '<b>Des:</b> Tostada con aguacate + huevo pochado · <b>Com:</b> Bacalao al horno + patatas · <b>Cen:</b> Ensalada de pollo con maíz' },
+        { day: 'Mar', meals: '<b>Des:</b> Yogur griego + nueces + manzana · <b>Com:</b> Arroz con verduras y gambas · <b>Cen:</b> Tortilla de espinacas' },
+        { day: 'Mié', meals: '<b>Des:</b> Huevos a la plancha + fruta · <b>Com:</b> Pollo guisado + boniato · <b>Cen:</b> Sardinas + ensalada verde' },
+        { day: 'Jue', meals: '<b>Des:</b> Yogur + plátano + avena · <b>Com:</b> Pasta con atún y tomate cherry · <b>Cen:</b> Revuelto de champiñones + huevo' },
+        { day: 'Vie', meals: '<b>Des:</b> Tostada integral + huevo cocido · <b>Com:</b> Alubias blancas con verdura · <b>Cen:</b> Merluza + brócoli al vapor' },
+        { day: 'Sáb', meals: '<b>Des:</b> Yogur griego + fruta · <b>Com:</b> Pollo al curry suave + arroz · <b>Cen:</b> Queso fresco + tomate + pepino' },
+        { day: 'Dom', meals: '<b>Des:</b> Huevos revueltos + zumo natural · <b>Com:</b> Dorada al horno + patatas · <b>Cen:</b> Ensalada variada con atún' },
+      ],
+      easy: [
+        { term: 'pollo horno listo', qty: 1 }, { term: 'merluza congelada', qty: 1 }, { term: 'huevos', qty: 0.5 },
+        { term: 'yogur griego natural', qty: 1 }, { term: 'avena', qty: 0.25 }, { term: 'arroz microondas', qty: 0.5 },
+        { term: 'alubias cocidas', qty: 0.5 }, { term: 'atún natural', qty: 1 },
+        { term: 'espinacas congeladas', qty: 0.5 }, { term: 'brócoli congelado', qty: 0.5 },
+        { term: 'tomate', qty: 0.5 }, { term: 'manzana', qty: 1 }, { term: 'aguacate', qty: 0.5 },
+      ],
+      std: [
+        { term: 'pechuga pollo', qty: 1 }, { term: 'merluza', qty: 1 }, { term: 'huevos', qty: 0.5 },
+        { term: 'yogur griego natural', qty: 1 }, { term: 'avena', qty: 0.25 }, { term: 'arroz', qty: 0.25 },
+        { term: 'alubias blancas', qty: 0.5 }, { term: 'atún natural', qty: 1 },
+        { term: 'espinacas', qty: 0.5 }, { term: 'brócoli', qty: 0.5 },
+        { term: 'tomate', qty: 0.5 }, { term: 'manzana', qty: 1 }, { term: 'pasta', qty: 0.25 },
+      ],
+    },
+    { label: 'Equilibrado', days: [
+        { day: 'Lun', meals: '<b>Des:</b> Batido de yogur + avena + plátano · <b>Com:</b> Pollo salteado + quinoa + aguacate · <b>Cen:</b> Huevos poché + espinacas' },
+        { day: 'Mar', meals: '<b>Des:</b> Tostada + huevo cocido + tomate · <b>Com:</b> Salmón al horno + arroz integral · <b>Cen:</b> Sopa de verduras + queso' },
+        { day: 'Mié', meals: '<b>Des:</b> Yogur + kiwi + muesli · <b>Com:</b> Pechuga a la plancha + boniato asado · <b>Cen:</b> Atún + ensalada de hojas' },
+        { day: 'Jue', meals: '<b>Des:</b> Huevos revueltos + avena · <b>Com:</b> Merluza en salsa verde + patatas · <b>Cen:</b> Queso fresco + pepino + tomate' },
+        { day: 'Vie', meals: '<b>Des:</b> Yogur + fruta + avena · <b>Com:</b> Lentejas rojas con curry suave · <b>Cen:</b> Tortilla de champiñones' },
+        { day: 'Sáb', meals: '<b>Des:</b> Tostada integral + aguacate + tomate · <b>Com:</b> Pollo al horno + verdura asada · <b>Cen:</b> Salmón ahumado + aguacate' },
+        { day: 'Dom', meals: '<b>Des:</b> Huevos a tu gusto + fruta · <b>Com:</b> Arroz meloso con pollo y verdura · <b>Cen:</b> Ensalada caprese + atún' },
+      ],
+      easy: [
+        { term: 'pollo horno listo', qty: 1 }, { term: 'salmón ahumado', qty: 0.5 }, { term: 'huevos', qty: 0.5 },
+        { term: 'yogur natural', qty: 1 }, { term: 'avena', qty: 0.25 }, { term: 'arroz microondas', qty: 0.5 },
+        { term: 'lentejas cocidas', qty: 0.5 }, { term: 'atún natural', qty: 0.5 },
+        { term: 'ensalada bolsa', qty: 0.5 }, { term: 'boniato', qty: 0.5 },
+        { term: 'tomate', qty: 0.5 }, { term: 'plátano', qty: 1 }, { term: 'aguacate', qty: 0.5 },
+      ],
+      std: [
+        { term: 'pechuga pollo', qty: 1 }, { term: 'salmón', qty: 0.5 }, { term: 'huevos', qty: 0.5 },
+        { term: 'yogur natural', qty: 1 }, { term: 'avena', qty: 0.25 }, { term: 'arroz integral', qty: 0.25 },
+        { term: 'lentejas rojas', qty: 0.5 }, { term: 'atún natural', qty: 0.5 },
+        { term: 'espinacas', qty: 0.5 }, { term: 'boniato', qty: 0.5 },
+        { term: 'tomate', qty: 0.5 }, { term: 'plátano', qty: 1 }, { term: 'aguacate', qty: 0.5 },
+      ],
+    },
+  ],
+
+  proteina: [
+    { label: 'Alto en proteína', days: [
+        { day: 'Lun', meals: '<b>Des:</b> Tortilla de 3 huevos + avena con leche · <b>Com:</b> Pechuga a la plancha + arroz + brócoli · <b>Cen:</b> Atún + queso fresco + tomate' },
+        { day: 'Mar', meals: '<b>Des:</b> Yogur griego + almendras + manzana · <b>Com:</b> Salmón al horno + boniato · <b>Cen:</b> Revuelto de claras + espinacas' },
+        { day: 'Mié', meals: '<b>Des:</b> Huevos + avena · <b>Com:</b> Pechuga a la plancha + quinoa + ensalada · <b>Cen:</b> Queso fresco + atún lata' },
+        { day: 'Jue', meals: '<b>Des:</b> Yogur griego + nueces · <b>Com:</b> Merluza al horno + arroz + espinacas · <b>Cen:</b> Huevos cocidos + aguacate' },
+        { day: 'Vie', meals: '<b>Des:</b> Claras + avena + frutos secos · <b>Com:</b> Pechuga salteada + boniato + brócoli · <b>Cen:</b> Atún + tomate + queso' },
+        { day: 'Sáb', meals: '<b>Des:</b> Yogur griego + plátano · <b>Com:</b> Salmón a la plancha + patatas cocidas · <b>Cen:</b> Pollo a la plancha + ensalada' },
+        { day: 'Dom', meals: '<b>Des:</b> Huevos revueltos con jamón cocido · <b>Com:</b> Pechuga entera al horno + arroz integral · <b>Cen:</b> Sardinas + tomate + queso fresco' },
+      ],
+      easy: [
+        { term: 'pollo horno listo', qty: 1 }, { term: 'atún natural', qty: 2 }, { term: 'huevos', qty: 1 },
+        { term: 'yogur griego natural', qty: 1 }, { term: 'queso fresco batido', qty: 1 }, { term: 'almendras', qty: 0.25 },
+        { term: 'salmón ahumado', qty: 0.5 }, { term: 'arroz microondas', qty: 0.5 }, { term: 'avena', qty: 0.5 },
+        { term: 'brócoli congelado', qty: 0.5 }, { term: 'espinacas congeladas', qty: 0.5 }, { term: 'plátano', qty: 1 },
+      ],
+      std: [
+        { term: 'pechuga pollo', qty: 1.5 }, { term: 'atún natural', qty: 2 }, { term: 'huevos', qty: 1 },
+        { term: 'yogur griego natural', qty: 1 }, { term: 'queso fresco batido', qty: 1 }, { term: 'almendras', qty: 0.25 },
+        { term: 'salmón', qty: 0.5 }, { term: 'arroz', qty: 0.25 }, { term: 'avena', qty: 0.5 },
+        { term: 'brócoli', qty: 0.5 }, { term: 'espinacas', qty: 0.5 }, { term: 'plátano', qty: 1 }, { term: 'merluza', qty: 0.5 },
+      ],
+    },
+    { label: 'Alto en proteína', days: [
+        { day: 'Lun', meals: '<b>Des:</b> Batido: yogur griego + avena + plátano · <b>Com:</b> Solomillo de pavo + arroz + verdura · <b>Cen:</b> Queso fresco + nueces + fruta' },
+        { day: 'Mar', meals: '<b>Des:</b> Huevos con jamón cocido + avena · <b>Com:</b> Dorada al horno + boniato + brócoli · <b>Cen:</b> Pollo a la plancha + ensalada' },
+        { day: 'Mié', meals: '<b>Des:</b> Yogur griego + almendras + plátano · <b>Com:</b> Pechuga al limón + arroz integral · <b>Cen:</b> Atún + tomate + queso fresco' },
+        { day: 'Jue', meals: '<b>Des:</b> Tortilla de claras + avena · <b>Com:</b> Merluza con espinacas + arroz · <b>Cen:</b> Yogur griego + nueces' },
+        { day: 'Vie', meals: '<b>Des:</b> Yogur griego + muesli + fruta · <b>Com:</b> Pollo al horno + quinoa + tomate · <b>Cen:</b> Huevos + aguacate + jamón cocido' },
+        { day: 'Sáb', meals: '<b>Des:</b> Huevos + fruta · <b>Com:</b> Salmón a la plancha + espárragos + arroz · <b>Cen:</b> Atún + pepino + queso fresco' },
+        { day: 'Dom', meals: '<b>Des:</b> Tostada + huevo + aguacate · <b>Com:</b> Pechuga entera al horno + boniato · <b>Cen:</b> Sardinas + ensalada verde' },
+      ],
+      easy: [
+        { term: 'pechuga pavo lonchas', qty: 0.5 }, { term: 'pollo horno listo', qty: 1 }, { term: 'atún natural', qty: 2 },
+        { term: 'huevos', qty: 1 }, { term: 'yogur griego natural', qty: 1 }, { term: 'queso fresco batido', qty: 1 },
+        { term: 'almendras', qty: 0.25 }, { term: 'salmón ahumado', qty: 0.5 },
+        { term: 'avena', qty: 0.5 }, { term: 'arroz microondas', qty: 0.5 },
+        { term: 'brócoli congelado', qty: 0.5 }, { term: 'plátano', qty: 1 }, { term: 'aguacate', qty: 0.5 },
+      ],
+      std: [
+        { term: 'pechuga pavo', qty: 0.5 }, { term: 'pechuga pollo', qty: 1.5 }, { term: 'atún natural', qty: 2 },
+        { term: 'huevos', qty: 1 }, { term: 'yogur griego natural', qty: 1 }, { term: 'queso fresco batido', qty: 1 },
+        { term: 'almendras', qty: 0.25 }, { term: 'salmón', qty: 0.5 },
+        { term: 'avena', qty: 0.5 }, { term: 'arroz integral', qty: 0.25 },
+        { term: 'espinacas', qty: 0.5 }, { term: 'plátano', qty: 1 }, { term: 'aguacate', qty: 0.5 }, { term: 'merluza', qty: 0.5 },
+      ],
+    },
+    { label: 'Alto en proteína', days: [
+        { day: 'Lun', meals: '<b>Des:</b> Huevos revueltos + avena + leche · <b>Com:</b> Pollo al horno + arroz + ensalada · <b>Cen:</b> Queso fresco batido + nueces' },
+        { day: 'Mar', meals: '<b>Des:</b> Yogur griego + almendras + fruta · <b>Com:</b> Salmón con espárragos + quinoa · <b>Cen:</b> Atún + huevo duro + tomate' },
+        { day: 'Mié', meals: '<b>Des:</b> Claras + avena + miel · <b>Com:</b> Merluza + brócoli + arroz · <b>Cen:</b> Pollo a la plancha + lechuga' },
+        { day: 'Jue', meals: '<b>Des:</b> Yogur griego + plátano + nueces · <b>Com:</b> Pechuga al curry + boniato · <b>Cen:</b> Huevos revueltos + queso fresco' },
+        { day: 'Vie', meals: '<b>Des:</b> Huevos + avena + fruta · <b>Com:</b> Atún en tomate + arroz · <b>Cen:</b> Sardinas + aguacate + ensalada' },
+        { day: 'Sáb', meals: '<b>Des:</b> Tortilla francesa + yogur griego · <b>Com:</b> Pollo asado + patatas + brócoli · <b>Cen:</b> Salmón ahumado + pepino' },
+        { day: 'Dom', meals: '<b>Des:</b> Huevos a tu gusto + fruta · <b>Com:</b> Merluza al horno + arroz integral · <b>Cen:</b> Queso fresco + atún + tomate' },
+      ],
+      easy: [
+        { term: 'pollo horno listo', qty: 1 }, { term: 'salmón ahumado', qty: 0.5 }, { term: 'atún natural', qty: 2 },
+        { term: 'huevos', qty: 1 }, { term: 'yogur griego natural', qty: 1 }, { term: 'queso fresco batido', qty: 1 },
+        { term: 'almendras', qty: 0.25 }, { term: 'nueces', qty: 0.25 },
+        { term: 'avena', qty: 0.5 }, { term: 'arroz microondas', qty: 0.5 },
+        { term: 'brócoli congelado', qty: 0.5 }, { term: 'plátano', qty: 1 },
+      ],
+      std: [
+        { term: 'pechuga pollo', qty: 1.5 }, { term: 'salmón', qty: 0.5 }, { term: 'atún natural', qty: 2 },
+        { term: 'huevos', qty: 1 }, { term: 'yogur griego natural', qty: 1 }, { term: 'queso fresco batido', qty: 1 },
+        { term: 'almendras', qty: 0.25 }, { term: 'nueces', qty: 0.25 },
+        { term: 'avena', qty: 0.5 }, { term: 'arroz', qty: 0.25 },
+        { term: 'brócoli', qty: 0.5 }, { term: 'espinacas', qty: 0.5 }, { term: 'plátano', qty: 1 }, { term: 'merluza', qty: 0.5 },
+      ],
+    },
+  ],
+
+  ligero: [
+    { label: 'Ligero / bajo en calorías', days: [
+        { day: 'Lun', meals: '<b>Des:</b> Yogur desnatado + kiwi · <b>Com:</b> Merluza al vapor + ensalada verde · <b>Cen:</b> Caldo de verduras + tortilla de claras' },
+        { day: 'Mar', meals: '<b>Des:</b> Infusión + tostada integral + tomate · <b>Com:</b> Pechuga de pavo + espárragos + tomate · <b>Cen:</b> Sopa de verduras + huevo cocido' },
+        { day: 'Mié', meals: '<b>Des:</b> Yogur desnatado + fresas · <b>Com:</b> Dorada a la plancha + espinacas rehogadas · <b>Cen:</b> Ensalada de pavo + pepino' },
+        { day: 'Jue', meals: '<b>Des:</b> Café + naranja + yogur desnatado · <b>Com:</b> Merluza + judías verdes + tomate · <b>Cen:</b> Tortilla de claras + champiñones' },
+        { day: 'Vie', meals: '<b>Des:</b> Tostada integral + tomate triturado · <b>Com:</b> Pechuga de pollo a la plancha + brócoli · <b>Cen:</b> Gazpacho + atún natural' },
+        { day: 'Sáb', meals: '<b>Des:</b> Yogur desnatado + fruta · <b>Com:</b> Lubina al horno + verdura asada · <b>Cen:</b> Ensalada de lechuga + atún' },
+        { day: 'Dom', meals: '<b>Des:</b> Fruta variada + yogur desnatado · <b>Com:</b> Merluza en papillote + pisto de verduras · <b>Cen:</b> Caldo + huevo + tostada' },
+      ],
+      easy: [
+        { term: 'merluza congelada', qty: 1 }, { term: 'pechuga pavo lonchas', qty: 0.5 }, { term: 'huevos', qty: 0.5 },
+        { term: 'yogur desnatado', qty: 1 }, { term: 'ensalada bolsa', qty: 1 }, { term: 'atún natural', qty: 1 },
+        { term: 'espinacas congeladas', qty: 0.5 }, { term: 'brócoli congelado', qty: 0.5 },
+        { term: 'tomate', qty: 0.5 }, { term: 'pepino', qty: 0.5 }, { term: 'naranja', qty: 1 },
+        { term: 'caldo de verduras', qty: 0.5 },
+      ],
+      std: [
+        { term: 'merluza', qty: 1 }, { term: 'pechuga pavo', qty: 0.5 }, { term: 'huevos', qty: 0.5 },
+        { term: 'yogur desnatado', qty: 1 }, { term: 'lechuga', qty: 0.5 }, { term: 'atún natural', qty: 1 },
+        { term: 'espinacas', qty: 0.5 }, { term: 'judías verdes', qty: 0.5 },
+        { term: 'tomate', qty: 0.5 }, { term: 'pepino', qty: 0.5 }, { term: 'naranja', qty: 1 },
+        { term: 'champiñones', qty: 0.5 },
+      ],
+    },
+    { label: 'Ligero / bajo en calorías', days: [
+        { day: 'Lun', meals: '<b>Des:</b> Té verde + fruta + yogur desnatado · <b>Com:</b> Pollo a la plancha + pisto de verduras · <b>Cen:</b> Crema de calabacín + huevo' },
+        { day: 'Mar', meals: '<b>Des:</b> Yogur desnatado + fresas · <b>Com:</b> Atún fresco + ensalada variada · <b>Cen:</b> Pavo a la plancha + espinacas' },
+        { day: 'Mié', meals: '<b>Des:</b> Fruta + café solo · <b>Com:</b> Bacalao al horno + espárragos · <b>Cen:</b> Tortilla de verduras sin patata' },
+        { day: 'Jue', meals: '<b>Des:</b> Yogur desnatado + naranja · <b>Com:</b> Pechuga al limón + ensalada de hojas · <b>Cen:</b> Caldo + atún + pepino' },
+        { day: 'Vie', meals: '<b>Des:</b> Infusión + tostada + tomate · <b>Com:</b> Merluza + judías verdes · <b>Cen:</b> Revuelto de claras + pimientos' },
+        { day: 'Sáb', meals: '<b>Des:</b> Batido verde (espinaca + manzana + yogur) · <b>Com:</b> Dorada + brócoli al vapor · <b>Cen:</b> Sopa de verduras + pollo' },
+        { day: 'Dom', meals: '<b>Des:</b> Yogur desnatado + fruta · <b>Com:</b> Lubina al horno + verdura asada · <b>Cen:</b> Ensalada de lechuga + atún + huevo' },
+      ],
+      easy: [
+        { term: 'pechuga pollo congelada', qty: 0.5 }, { term: 'merluza congelada', qty: 1 }, { term: 'pechuga pavo lonchas', qty: 0.5 },
+        { term: 'huevos', qty: 0.5 }, { term: 'yogur desnatado', qty: 1 }, { term: 'ensalada bolsa', qty: 1 },
+        { term: 'atún natural', qty: 1 }, { term: 'espinacas congeladas', qty: 0.5 },
+        { term: 'judías verdes congeladas', qty: 0.5 }, { term: 'tomate', qty: 0.5 },
+        { term: 'naranja', qty: 1 }, { term: 'caldo de verduras', qty: 0.5 },
+      ],
+      std: [
+        { term: 'pechuga pollo', qty: 0.5 }, { term: 'merluza', qty: 1 }, { term: 'pechuga pavo', qty: 0.5 },
+        { term: 'huevos', qty: 0.5 }, { term: 'yogur desnatado', qty: 1 }, { term: 'lechuga', qty: 0.5 },
+        { term: 'atún natural', qty: 1 }, { term: 'espinacas', qty: 0.5 },
+        { term: 'judías verdes', qty: 0.5 }, { term: 'tomate', qty: 0.5 },
+        { term: 'naranja', qty: 1 }, { term: 'champiñones', qty: 0.5 }, { term: 'calabacín', qty: 0.5 },
+      ],
+    },
+    { label: 'Ligero / bajo en calorías', days: [
+        { day: 'Lun', meals: '<b>Des:</b> Agua con limón + fruta + yogur · <b>Com:</b> Sopa de pollo desgrasada + ensalada · <b>Cen:</b> Sardinas al limón + espinacas' },
+        { day: 'Mar', meals: '<b>Des:</b> Yogur desnatado + manzana · <b>Com:</b> Merluza al vapor + espárragos + tomate · <b>Cen:</b> Caldo depurativo + tortilla de claras' },
+        { day: 'Mié', meals: '<b>Des:</b> Té + tostada integral + tomate · <b>Com:</b> Pollo al vapor + judías verdes · <b>Cen:</b> Ensalada de pepino + pavo + atún' },
+        { day: 'Jue', meals: '<b>Des:</b> Yogur desnatado + fruta · <b>Com:</b> Bacalao ligero + brócoli · <b>Cen:</b> Crema de puerros + huevo cocido' },
+        { day: 'Vie', meals: '<b>Des:</b> Fruta + café · <b>Com:</b> Pechuga de pavo + ensalada templada · <b>Cen:</b> Tortilla de champiñones + tomate' },
+        { day: 'Sáb', meals: '<b>Des:</b> Yogur desnatado + kiwi · <b>Com:</b> Lubina a la sal + verdura asada · <b>Cen:</b> Gazpacho + atún + pepino' },
+        { day: 'Dom', meals: '<b>Des:</b> Batido de frutas + yogur · <b>Com:</b> Merluza en papillote + espinacas · <b>Cen:</b> Sopa de verduras + pollo hervido' },
+      ],
+      easy: [
+        { term: 'merluza congelada', qty: 1 }, { term: 'pechuga pavo lonchas', qty: 0.5 }, { term: 'huevos', qty: 0.5 },
+        { term: 'yogur desnatado', qty: 1 }, { term: 'ensalada bolsa', qty: 1 }, { term: 'atún natural', qty: 1 },
+        { term: 'espinacas congeladas', qty: 0.5 }, { term: 'brócoli congelado', qty: 0.5 },
+        { term: 'tomate', qty: 0.5 }, { term: 'pepino', qty: 0.5 }, { term: 'kiwi', qty: 1 },
+        { term: 'caldo de pollo', qty: 0.5 },
+      ],
+      std: [
+        { term: 'merluza', qty: 1 }, { term: 'pechuga pavo', qty: 0.5 }, { term: 'huevos', qty: 0.5 },
+        { term: 'yogur desnatado', qty: 1 }, { term: 'lechuga', qty: 0.5 }, { term: 'atún natural', qty: 1 },
+        { term: 'espinacas', qty: 0.5 }, { term: 'judías verdes', qty: 0.5 },
+        { term: 'tomate', qty: 0.5 }, { term: 'pepino', qty: 0.5 }, { term: 'kiwi', qty: 1 },
+        { term: 'champiñones', qty: 0.5 },
+      ],
+    },
+  ],
+
+  vegetariano: [
+    { label: 'Vegetariano', days: [
+        { day: 'Lun', meals: '<b>Des:</b> Yogur natural + avena + fruta · <b>Com:</b> Lentejas estofadas con zanahoria y apio · <b>Cen:</b> Tortilla de espinacas + tomate' },
+        { day: 'Mar', meals: '<b>Des:</b> Tostada con hummus + tomate · <b>Com:</b> Arroz con verduras salteadas + tofu · <b>Cen:</b> Queso fresco + aguacate + pepino' },
+        { day: 'Mié', meals: '<b>Des:</b> Yogur + muesli + fruta · <b>Com:</b> Garbanzos al curry con arroz · <b>Cen:</b> Huevos revueltos + champiñones' },
+        { day: 'Jue', meals: '<b>Des:</b> Batido verde + tostada integral · <b>Com:</b> Pasta integral con tomate y mozzarella · <b>Cen:</b> Crema de verduras + queso fresco' },
+        { day: 'Vie', meals: '<b>Des:</b> Yogur + avena + plátano · <b>Com:</b> Buddha bowl: quinoa + garbanzos + aguacate · <b>Cen:</b> Tortilla de patatas light' },
+        { day: 'Sáb', meals: '<b>Des:</b> Tostada integral + huevo + tomate · <b>Com:</b> Alubias guisadas con verdura · <b>Cen:</b> Ensalada caprese + nueces' },
+        { day: 'Dom', meals: '<b>Des:</b> Fruta + yogur natural · <b>Com:</b> Lasaña de verduras casera · <b>Cen:</b> Sopa de verduras + queso fresco' },
+      ],
+      easy: [
+        { term: 'lentejas cocidas', qty: 0.5 }, { term: 'garbanzos cocidos', qty: 0.5 }, { term: 'tofu', qty: 0.5 },
+        { term: 'huevos', qty: 0.5 }, { term: 'queso fresco batido', qty: 0.5 }, { term: 'yogur natural', qty: 1 },
+        { term: 'almendras', qty: 0.25 }, { term: 'arroz microondas', qty: 0.5 },
+        { term: 'espinacas congeladas', qty: 0.5 }, { term: 'aguacate', qty: 0.5 },
+        { term: 'tomate', qty: 0.5 }, { term: 'plátano', qty: 1 }, { term: 'hummus', qty: 0.5 },
+      ],
+      std: [
+        { term: 'lentejas', qty: 0.5 }, { term: 'garbanzos', qty: 0.5 }, { term: 'tofu', qty: 0.5 },
+        { term: 'huevos', qty: 0.5 }, { term: 'queso fresco batido', qty: 0.5 }, { term: 'yogur natural', qty: 1 },
+        { term: 'almendras', qty: 0.25 }, { term: 'arroz', qty: 0.25 },
+        { term: 'espinacas', qty: 0.5 }, { term: 'aguacate', qty: 0.5 },
+        { term: 'tomate', qty: 0.5 }, { term: 'plátano', qty: 1 }, { term: 'pasta integral', qty: 0.25 }, { term: 'champiñones', qty: 0.5 },
+      ],
+    },
+    { label: 'Vegetariano', days: [
+        { day: 'Lun', meals: '<b>Des:</b> Smoothie de frutas + yogur · <b>Com:</b> Alubias negras con arroz y aguacate · <b>Cen:</b> Revuelto de tofu + pimientos' },
+        { day: 'Mar', meals: '<b>Des:</b> Tostada de aguacate + huevo · <b>Com:</b> Curry de lentejas rojas · <b>Cen:</b> Ensalada de rúcula + queso + nueces' },
+        { day: 'Mié', meals: '<b>Des:</b> Yogur + granola + mango · <b>Com:</b> Wok de verduras y tofu con arroz · <b>Cen:</b> Tortilla española de calabacín' },
+        { day: 'Jue', meals: '<b>Des:</b> Avena con leche + plátano + canela · <b>Com:</b> Potaje de garbanzos con espinacas · <b>Cen:</b> Queso feta + tomate + pepino' },
+        { day: 'Vie', meals: '<b>Des:</b> Tostada integral + hummus · <b>Com:</b> Risotto de setas y queso · <b>Cen:</b> Crema de zanahoria + huevo cocido' },
+        { day: 'Sáb', meals: '<b>Des:</b> Yogur + fruta variada · <b>Com:</b> Pizza casera de verduras · <b>Cen:</b> Ensalada templada de lentejas + queso' },
+        { day: 'Dom', meals: '<b>Des:</b> Huevos revueltos + tostada integral · <b>Com:</b> Curry de garbanzos y espinacas + arroz · <b>Cen:</b> Sopa de verduras + tofu' },
+      ],
+      easy: [
+        { term: 'alubias cocidas', qty: 0.5 }, { term: 'lentejas cocidas', qty: 0.5 }, { term: 'garbanzos cocidos', qty: 0.5 },
+        { term: 'tofu', qty: 0.5 }, { term: 'huevos', qty: 0.5 }, { term: 'queso fresco batido', qty: 0.5 },
+        { term: 'yogur natural', qty: 1 }, { term: 'arroz microondas', qty: 0.5 },
+        { term: 'espinacas congeladas', qty: 0.5 }, { term: 'aguacate', qty: 0.5 },
+        { term: 'plátano', qty: 1 }, { term: 'hummus', qty: 0.5 }, { term: 'champiñones', qty: 0.5 },
+      ],
+      std: [
+        { term: 'alubias blancas', qty: 0.5 }, { term: 'lentejas rojas', qty: 0.5 }, { term: 'garbanzos', qty: 0.5 },
+        { term: 'tofu', qty: 0.5 }, { term: 'huevos', qty: 0.5 }, { term: 'queso fresco batido', qty: 0.5 },
+        { term: 'yogur natural', qty: 1 }, { term: 'arroz', qty: 0.25 },
+        { term: 'espinacas', qty: 0.5 }, { term: 'aguacate', qty: 0.5 },
+        { term: 'plátano', qty: 1 }, { term: 'champiñones', qty: 0.5 }, { term: 'zanahoria', qty: 0.5 }, { term: 'calabacín', qty: 0.5 },
+      ],
+    },
+    { label: 'Vegetariano', days: [
+        { day: 'Lun', meals: '<b>Des:</b> Avena overnight + fruta · <b>Com:</b> Ensalada de quinoa + garbanzos + aguacate · <b>Cen:</b> Tortilla de champiñones + queso' },
+        { day: 'Mar', meals: '<b>Des:</b> Yogur + semillas + manzana · <b>Com:</b> Crema de calabaza + tostada + huevo · <b>Cen:</b> Tofu a la plancha + espinacas' },
+        { day: 'Mié', meals: '<b>Des:</b> Tostada integral + tomate + queso · <b>Com:</b> Pasta con pesto y tomates cherry · <b>Cen:</b> Sopa de lentejas + pan integral' },
+        { day: 'Jue', meals: '<b>Des:</b> Batido de yogur + avena + plátano · <b>Com:</b> Alubias estofadas con verdura · <b>Cen:</b> Revuelto de huevos + champiñones' },
+        { day: 'Vie', meals: '<b>Des:</b> Yogur + muesli + fruta · <b>Com:</b> Wok de verduras con tofu y arroz · <b>Cen:</b> Ensalada César vegetariana' },
+        { day: 'Sáb', meals: '<b>Des:</b> Huevos a tu gusto + fruta · <b>Com:</b> Curry de garbanzos con espinacas · <b>Cen:</b> Pizza de verduras + queso' },
+        { day: 'Dom', meals: '<b>Des:</b> Fruta variada + yogur + nueces · <b>Com:</b> Risotto de espinacas y queso parmesano · <b>Cen:</b> Crema de verduras + queso fresco' },
+      ],
+      easy: [
+        { term: 'garbanzos cocidos', qty: 0.5 }, { term: 'lentejas cocidas', qty: 0.5 }, { term: 'tofu', qty: 0.5 },
+        { term: 'huevos', qty: 0.5 }, { term: 'queso fresco batido', qty: 0.5 }, { term: 'yogur natural', qty: 1 },
+        { term: 'nueces', qty: 0.25 }, { term: 'arroz microondas', qty: 0.5 },
+        { term: 'espinacas congeladas', qty: 0.5 }, { term: 'aguacate', qty: 0.5 },
+        { term: 'plátano', qty: 1 }, { term: 'manzana', qty: 1 }, { term: 'champiñones', qty: 0.5 },
+      ],
+      std: [
+        { term: 'garbanzos', qty: 0.5 }, { term: 'lentejas', qty: 0.5 }, { term: 'tofu', qty: 0.5 },
+        { term: 'huevos', qty: 0.5 }, { term: 'queso fresco batido', qty: 0.5 }, { term: 'yogur natural', qty: 1 },
+        { term: 'nueces', qty: 0.25 }, { term: 'arroz', qty: 0.25 },
+        { term: 'espinacas', qty: 0.5 }, { term: 'aguacate', qty: 0.5 },
+        { term: 'plátano', qty: 1 }, { term: 'manzana', qty: 1 }, { term: 'champiñones', qty: 0.5 }, { term: 'calabacín', qty: 0.5 },
+      ],
+    },
+  ],
+
+  familiar: [
+    { label: 'Familiar / rápido', days: [
+        { day: 'Lun', meals: '<b>Com:</b> Pasta con salsa de tomate y pollo picado · <b>Cen:</b> Tortilla de patatas + ensalada' },
+        { day: 'Mar', meals: '<b>Com:</b> Arroz con pollo y verduras salteadas · <b>Cen:</b> Croquetas de pollo + tomate' },
+        { day: 'Mié', meals: '<b>Com:</b> Macarrones con atún y tomate · <b>Cen:</b> Huevos fritos con patatas' },
+        { day: 'Jue', meals: '<b>Com:</b> Pollo al horno con patatas y romero · <b>Cen:</b> Ensalada mixta + atún + pan' },
+        { day: 'Vie', meals: '<b>Com:</b> Albóndigas en salsa con arroz · <b>Cen:</b> Pizza casera de jamón y queso' },
+        { day: 'Sáb', meals: '<b>Com:</b> Paella de pollo y verduras · <b>Cen:</b> Tortilla española + pan' },
+        { day: 'Dom', meals: '<b>Com:</b> Pollo asado al horno con limón · <b>Cen:</b> Caldo de pollo + fideos + tostada' },
+      ],
+      easy: [
+        { term: 'pollo horno listo', qty: 2 }, { term: 'pasta', qty: 1 }, { term: 'tomate frito', qty: 1 },
+        { term: 'arroz microondas', qty: 1 }, { term: 'atún natural', qty: 1 }, { term: 'huevos', qty: 1 },
+        { term: 'patatas congeladas', qty: 0.5 }, { term: 'croquetas congeladas', qty: 0.5 },
+        { term: 'queso rallado', qty: 0.25 }, { term: 'ensalada bolsa', qty: 0.5 }, { term: 'pan', qty: 1 },
+      ],
+      std: [
+        { term: 'pechuga pollo', qty: 2 }, { term: 'pasta', qty: 1 }, { term: 'tomate frito', qty: 1 },
+        { term: 'arroz', qty: 0.5 }, { term: 'atún natural', qty: 1 }, { term: 'huevos', qty: 1 },
+        { term: 'patatas', qty: 1 }, { term: 'carne picada mixta', qty: 0.5 },
+        { term: 'queso rallado', qty: 0.25 }, { term: 'lechuga', qty: 0.5 }, { term: 'pan', qty: 1 },
+      ],
+    },
+    { label: 'Familiar / rápido', days: [
+        { day: 'Lun', meals: '<b>Com:</b> Lentejas caseras con chorizo · <b>Cen:</b> Huevos fritos con patatas y pimientos' },
+        { day: 'Mar', meals: '<b>Com:</b> Merluza rebozada + ensalada + patatas · <b>Cen:</b> Pasta con mantequilla y queso' },
+        { day: 'Mié', meals: '<b>Com:</b> Pollo guisado con patatas y zanahoria · <b>Cen:</b> Tortilla de queso + tomate' },
+        { day: 'Jue', meals: '<b>Com:</b> Fideos con verduras · <b>Cen:</b> Sandwich de jamón y queso + ensalada' },
+        { day: 'Vie', meals: '<b>Com:</b> Pizza 4 quesos casera · <b>Cen:</b> Sopa de fideos con pollo' },
+        { day: 'Sáb', meals: '<b>Com:</b> Costillas al horno con patatas fritas · <b>Cen:</b> Bocadillos variados + ensalada' },
+        { day: 'Dom', meals: '<b>Com:</b> Cocido de garbanzos con verdura · <b>Cen:</b> Croquetas al horno + ensalada' },
+      ],
+      easy: [
+        { term: 'pollo horno listo', qty: 1 }, { term: 'lentejas cocidas', qty: 1 }, { term: 'garbanzos cocidos', qty: 1 },
+        { term: 'merluza congelada', qty: 0.5 }, { term: 'pasta', qty: 1 }, { term: 'huevos', qty: 1 },
+        { term: 'patatas congeladas', qty: 1 }, { term: 'queso rallado', qty: 0.5 },
+        { term: 'ensalada bolsa', qty: 0.5 }, { term: 'pan', qty: 1 },
+        { term: 'tomate frito', qty: 0.5 }, { term: 'jamón cocido', qty: 0.5 },
+      ],
+      std: [
+        { term: 'pechuga pollo', qty: 1 }, { term: 'lentejas', qty: 1 }, { term: 'garbanzos', qty: 1 },
+        { term: 'merluza', qty: 0.5 }, { term: 'pasta', qty: 1 }, { term: 'huevos', qty: 1 },
+        { term: 'patatas', qty: 1 }, { term: 'queso rallado', qty: 0.5 },
+        { term: 'lechuga', qty: 0.5 }, { term: 'pan', qty: 1 },
+        { term: 'tomate frito', qty: 0.5 }, { term: 'jamón cocido', qty: 0.5 }, { term: 'carne picada mixta', qty: 0.5 },
+      ],
+    },
+    { label: 'Familiar / rápido', days: [
+        { day: 'Lun', meals: '<b>Com:</b> Hamburguesas caseras con patatas · <b>Cen:</b> Sopa de fideos + pan' },
+        { day: 'Mar', meals: '<b>Com:</b> Empanada de atún + ensalada · <b>Cen:</b> Tortilla de patatas + pan' },
+        { day: 'Mié', meals: '<b>Com:</b> Espaguetis a la carbonara · <b>Cen:</b> Crema de verduras + tostadas' },
+        { day: 'Jue', meals: '<b>Com:</b> Pollo en salsa con arroz · <b>Cen:</b> Huevos revueltos con jamón cocido' },
+        { day: 'Vie', meals: '<b>Com:</b> Alitas de pollo al horno + patatas · <b>Cen:</b> Bocadillos de jamón y queso' },
+        { day: 'Sáb', meals: '<b>Com:</b> Arroz con costillas y tomate · <b>Cen:</b> Tortilla española + ensalada' },
+        { day: 'Dom', meals: '<b>Com:</b> Asado de pollo con verdura y patatas · <b>Cen:</b> Caldo casero + fideos + pan' },
+      ],
+      easy: [
+        { term: 'alitas pollo', qty: 1 }, { term: 'pollo horno listo', qty: 1 }, { term: 'pasta', qty: 1 },
+        { term: 'atún natural', qty: 1 }, { term: 'huevos', qty: 1 }, { term: 'patatas congeladas', qty: 1 },
+        { term: 'arroz microondas', qty: 0.5 }, { term: 'queso rallado', qty: 0.5 },
+        { term: 'jamón cocido', qty: 0.5 }, { term: 'pan', qty: 1 }, { term: 'tomate frito', qty: 0.5 },
+      ],
+      std: [
+        { term: 'alitas pollo', qty: 1 }, { term: 'pechuga pollo', qty: 1 }, { term: 'pasta', qty: 1 },
+        { term: 'atún natural', qty: 1 }, { term: 'huevos', qty: 1 }, { term: 'patatas', qty: 1 },
+        { term: 'arroz', qty: 0.5 }, { term: 'queso rallado', qty: 0.5 },
+        { term: 'jamón cocido', qty: 0.5 }, { term: 'pan', qty: 1 }, { term: 'tomate frito', qty: 0.5 }, { term: 'carne picada', qty: 0.5 },
+      ],
+    },
+  ],
 };
+
+const EXERCISE_MULT = { sedentario: 0.8, moderado: 1.0, deportista: 1.4 };
+const EXERCISE_LABEL = { sedentario: 'Sedentario', moderado: 'Moderado', deportista: 'Deportista' };
 
 const menuState = { goal: 'equilibrado', skill: '0', people: '1', exercise: 'moderado' };
 document.querySelectorAll('#menuForm .options').forEach(group => {
@@ -607,7 +802,6 @@ const menuForm = document.getElementById('menuForm');
 const menuResultsEl = document.getElementById('menuResults');
 const menuBtn = document.getElementById('menuGenerateBtn');
 
-// Skeleton de carga visual
 function showMenuSkeleton() {
   menuResultsEl.innerHTML = `
     <div class="receipt-shell">
@@ -625,43 +819,45 @@ function showMenuSkeleton() {
 menuForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   menuBtn.disabled = true;
-  menuBtn.textContent = '🤖 Generando menú con IA…';
+  menuBtn.textContent = 'Consultando precios…';
   showMenuSkeleton();
   menuResultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-  let data;
+  const variants = GOAL_VARIANTS[menuState.goal];
+  const goalData = variants[Math.floor(Math.random() * variants.length)];
+  const people = parseInt(menuState.people, 10);
+  const mult = EXERCISE_MULT[menuState.exercise] || 1.0;
+  const ingredientes = menuState.skill === '0' ? goalData.easy : goalData.std;
+  const unidades = ingredientes.map(ing => Math.max(1, Math.ceil(ing.qty * people * mult)));
+
+  let items = [];
+  let total = 0;
   try {
-    const res = await fetch('/api/menu', {
+    const res = await fetch('/api/batch', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        goal: menuState.goal,
-        skill: menuState.skill,
-        people: parseInt(menuState.people, 10),
-        exercise: menuState.exercise,
-      }),
+      body: JSON.stringify({ terms: ingredientes.map(ing => ing.term) }),
     });
-    data = await res.json();
-    if (!data.days || !data.items) throw new Error(data.error || 'Respuesta inesperada');
-  } catch (err) {
-    menuResultsEl.innerHTML = `<div class="empty-state">No se ha podido generar el menú: ${err.message}</div>`;
+    const data = await res.json();
+    items = (data.items || []).map((it, i) => ({ ...it, units: unidades[i] }));
+    total = items.reduce((sum, it) => sum + (it.price ? it.price * it.units : 0), 0);
+  } catch {
+    menuResultsEl.innerHTML = '<div class="empty-state">No se ha podido conectar con el servidor de precios.</div>';
     menuBtn.disabled = false;
     menuBtn.textContent = 'Generar mi compra semanal';
     return;
   }
 
-  const { days, items, total, people } = data;
-  const goalLabels = { equilibrado: 'Equilibrado', proteina: 'Alto en proteína', ligero: 'Ligero', vegetariano: 'Vegetariano', familiar: 'Familiar' };
-  const goalLabel = goalLabels[menuState.goal] || menuState.goal;
   const personasLabel = `${people} persona${people > 1 ? 's' : ''}`;
+  const exLabel = EXERCISE_LABEL[menuState.exercise] || '';
 
-  const daysHtml = days.map(d => `
+  const daysHtml = goalData.days.map(d => `
     <div class="day-card"><div class="day-name">${d.day}</div><div class="day-meals">${d.meals}</div></div>`).join('');
 
   const linesHtml = items.map((it, i) => {
     if (it.error) return `<div class="receipt-line error" style="animation-delay:${i * 0.06}s"><span class="name">${it.term} — sin resultado</span></div>`;
-    const qtyLabel = it.qty > 1 ? ` ×${it.qty}` : '';
-    const price = (it.price * it.qty).toFixed(2);
+    const qtyLabel = it.units > 1 ? ` ×${it.units}` : '';
+    const price = (it.price * it.units).toFixed(2);
     return `<div class="receipt-line" style="animation-delay:${i * 0.06}s">
       <span class="name">${it.name}${qtyLabel}</span>
       <div class="price-col"><span class="price">${price}€</span></div>
@@ -673,8 +869,8 @@ menuForm.addEventListener('submit', async (e) => {
     <div class="menu-days">${daysHtml}</div>
     <div class="receipt-shell">
       <div class="receipt">
-        <div class="receipt-title">Lista de la compra — ${goalLabel}</div>
-        <div class="receipt-sub">${new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })} · ${personasLabel} · Mercadona</div>
+        <div class="receipt-title">Lista de la compra — ${goalData.label}</div>
+        <div class="receipt-sub">${new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })} · ${personasLabel} · ${exLabel} · Mercadona</div>
         <hr>${linesHtml}<hr>
         <div class="receipt-total"><span>TOTAL</span><span>${total.toFixed(2)}€</span></div>
         <div class="receipt-barcode">▌▌│▌│▌▌▌│▌▌│▌▌▌│▌▌</div>
@@ -688,11 +884,11 @@ menuForm.addEventListener('submit', async (e) => {
   document.getElementById('copyMenuBtn').addEventListener('click', () => {
     const fecha = new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
     const lineas = items.filter(it => !it.error).map(it => {
-      const q = it.qty > 1 ? ` ×${it.qty}` : '';
-      const precio = (it.price * it.qty).toFixed(2).replace('.', ',');
+      const q = it.units > 1 ? ` ×${it.units}` : '';
+      const precio = (it.price * it.units).toFixed(2).replace('.', ',');
       return `• ${it.name}${q} — ${precio}€`;
     });
-    const text = `🛒 Menú ${goalLabel} · ${personasLabel} · ${fecha}\n\n${lineas.join('\n')}\n\nTotal: ${total.toFixed(2).replace('.', ',')}€`;
+    const text = `🛒 Menú ${goalData.label} · ${personasLabel} · ${fecha}\n\n${lineas.join('\n')}\n\nTotal: ${total.toFixed(2).replace('.', ',')}€`;
     copyAndFlash(text, 'copyMenuBtn', 'Copiar lista');
   });
 
