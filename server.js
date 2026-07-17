@@ -9,9 +9,17 @@ const { execFile } = require('child_process');
 const { promisify } = require('util');
 const execFileAsync = promisify(execFile);
 
+const path = require('path');
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 const WAREHOUSE = process.env.MERCADONA_WH || 'mad1'; // ajusta a tu almacén real
+
+// Usa el binario global si existe; si no, el local de node_modules
+const CLI_BIN = (() => {
+  const local = path.join(__dirname, 'node_modules', '.bin', 'mercadona');
+  try { require('fs').accessSync(local, require('fs').constants.X_OK); return local; } catch { return 'mercadona'; }
+})();
 
 // Permite que tu artifact publicado (o cualquier web) llame a este proxy.
 app.use(cors());
@@ -19,7 +27,7 @@ app.use(express.json());
 app.use(express.static(require('path').join(__dirname, 'public')));
 
 async function runCli(args) {
-  const { stdout } = await execFileAsync('mercadona', [...args, '--json', '--wh', WAREHOUSE], {
+  const { stdout } = await execFileAsync(CLI_BIN, [...args, '--json', '--wh', WAREHOUSE], {
     timeout: 15000,
     maxBuffer: 5 * 1024 * 1024,
   });
@@ -61,7 +69,6 @@ app.post('/api/batch', async (req, res) => {
   try {
     const fs = require('fs');
     const os = require('os');
-    const path = require('path');
     const tmpFile = path.join(os.tmpdir(), `batch-${Date.now()}.txt`);
     fs.writeFileSync(tmpFile, terms.join('\n'));
 
