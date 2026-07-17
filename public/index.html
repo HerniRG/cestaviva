@@ -120,29 +120,6 @@
   .empty-state { text-align: center; padding: 60px 20px; color: rgba(237,228,211,0.4); font-size: 14px; }
   .loading { text-align: center; padding: 40px 20px; color: var(--mustard); font-family: 'IBM Plex Mono', monospace; font-size: 13px; }
 
-  /* Barra de ubicación */
-  .location-bar {
-    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
-    background: var(--bg-soft); border: 1px solid rgba(237,228,211,0.08);
-    border-radius: 10px; padding: 10px 16px; margin-bottom: 20px;
-    font-family: 'IBM Plex Mono', monospace; font-size: 13px;
-  }
-  .location-icon { font-size: 15px; flex-shrink: 0; }
-  .location-status { flex: 1; min-width: 120px; color: rgba(237,228,211,0.7); }
-  .location-status b { color: var(--mustard); }
-  .location-form { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
-  .location-form input {
-    font-family: 'IBM Plex Mono', monospace; font-size: 13px;
-    width: 90px; padding: 6px 10px; border-radius: 6px;
-    border: 1px solid rgba(237,228,211,0.2); background: var(--bg);
-    color: var(--paper-soft); letter-spacing: 0.08em;
-  }
-  .location-form input:focus { outline: none; border-color: var(--mustard); }
-  .location-form button {
-    font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 12px;
-    padding: 6px 12px; border-radius: 6px; border: none;
-    background: var(--mustard); color: #2B2013; cursor: pointer; white-space: nowrap;
-  }
   .location-form button:disabled { opacity: 0.5; cursor: not-allowed; }
   .location-err { font-size: 12px; color: var(--tomato); width: 100%; }
   .location-change { font-size: 11px; color: rgba(237,228,211,0.4); cursor: pointer; text-decoration: underline; white-space: nowrap; }
@@ -160,16 +137,6 @@
     <p>Busca cualquier producto y compáralo, o genera un menú semanal según tu objetivo — con la lista de la compra ya priceada, lista para copiar.</p>
   </header>
 
-  <!-- Barra de ubicación / almacén -->
-  <div class="location-bar" id="locationBar">
-    <span class="location-icon">📍</span>
-    <span class="location-status" id="locationStatus">¿Dónde haces la compra? Introduce tu CP para ver precios de tu zona.</span>
-    <div class="location-form" id="locationForm">
-      <input type="text" id="cpInput" maxlength="5" placeholder="28001" autocomplete="postal-code" inputmode="numeric">
-      <button id="cpBtn">Confirmar</button>
-    </div>
-    <span class="location-err" id="locationErr" style="display:none"></span>
-  </div>
 
   <div class="tabs">
     <button class="tab-btn active" data-tab="search">Búsqueda libre</button>
@@ -239,100 +206,6 @@
 </div>
 
 <script>
-/* ---------- Ubicación / almacén ---------- */
-let currentWh = localStorage.getItem('cv_wh') || '';
-let currentCp = localStorage.getItem('cv_cp') || '';
-
-const locationStatus = document.getElementById('locationStatus');
-const locationForm   = document.getElementById('locationForm');
-const locationErr    = document.getElementById('locationErr');
-const cpInput        = document.getElementById('cpInput');
-const cpBtn          = document.getElementById('cpBtn');
-
-function renderLocationBar() {
-  locationErr.style.display = 'none';
-  if (currentWh && currentCp) {
-    locationStatus.innerHTML = `Precios para el CP <b>${currentCp}</b> · almacén <b>${currentWh}</b> &nbsp;<span class="location-change" id="changeZone">cambiar</span>`;
-    locationForm.style.display = 'none';
-    document.getElementById('changeZone')?.addEventListener('click', () => {
-      currentWh = ''; currentCp = '';
-      localStorage.removeItem('cv_wh'); localStorage.removeItem('cv_cp');
-      renderLocationBar();
-    });
-  } else {
-    locationStatus.textContent = '¿Dónde haces la compra? Introduce tu CP para ver precios de tu zona.';
-    locationForm.style.display = 'flex';
-    cpInput.focus();
-  }
-}
-
-async function resolveCP() {
-  const cp = cpInput.value.trim();
-  if (!/^\d{5}$/.test(cp)) {
-    locationErr.textContent = 'Escribe un código postal de 5 dígitos (ej. 28001)';
-    locationErr.style.display = 'block'; return;
-  }
-  cpBtn.disabled = true; cpBtn.textContent = '…';
-  locationErr.style.display = 'none';
-  try {
-    const res = await fetch(`/api/warehouse?cp=${cp}`);
-    const data = await res.json();
-    if (data.error) {
-      locationErr.textContent = data.error;
-      locationErr.style.display = 'block';
-    } else {
-      const prevWh = currentWh;
-      currentCp = data.postal_code;
-      currentWh = data.warehouse;
-      localStorage.setItem('cv_cp', currentCp);
-      localStorage.setItem('cv_wh', currentWh);
-      renderLocationBar();
-      // Si hay items en el basket y el almacén cambió, actualizamos precios
-      if (basket.length > 0 && prevWh !== currentWh) {
-        await repriceBasket();
-      }
-    }
-  } catch {
-    locationErr.textContent = 'No se pudo conectar con el servidor.';
-    locationErr.style.display = 'block';
-  }
-  cpBtn.disabled = false; cpBtn.textContent = 'Confirmar';
-}
-
-async function repriceBasket() {
-  const terms = basket.map(it => it.term);
-  // Indicador visual mientras recarga precios
-  const resultsEl = document.getElementById('searchResults');
-  const oldHtml = resultsEl.innerHTML;
-  const banner = document.createElement('div');
-  banner.style.cssText = 'font-family:IBM Plex Mono,monospace;font-size:12px;color:var(--mustard);text-align:center;padding:8px 0;';
-  banner.textContent = '↺ Actualizando precios para tu zona…';
-  resultsEl.prepend(banner);
-  try {
-    const res = await fetch('/api/batch', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ terms, wh: currentWh }),
-    });
-    const data = await res.json();
-    (data.items || []).forEach((item, i) => {
-      if (!item.error && basket[i]) {
-        basket[i].price = item.price;
-        basket[i].name  = item.name;
-      }
-    });
-    saveBasket();
-    renderBasket();
-  } catch {
-    // silencioso — los precios quedan como estaban
-  }
-}
-
-cpBtn.addEventListener('click', resolveCP);
-cpInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); resolveCP(); } });
-cpInput.addEventListener('input', () => { cpInput.value = cpInput.value.replace(/\D/g, '').slice(0, 5); });
-
-renderLocationBar();
 
 /* ---------- Tabs ---------- */
 document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -363,7 +236,7 @@ async function addTerm(term) {
   searchAddBtn.textContent = '…';
   searchError.style.display = 'none';
   try {
-    const whParam = currentWh ? `&wh=${encodeURIComponent(currentWh)}` : '';
+    const whParam = '';
     const res = await fetch('/api/search?q=' + encodeURIComponent(term) + whParam);
     const data = await res.json();
     if (data.error) {
@@ -698,7 +571,7 @@ menuForm.addEventListener('submit', async (e) => {
     const res = await fetch('/api/batch', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ terms: ingredientes.map(ing => ing.term), ...(currentWh ? { wh: currentWh } : {}) }),
+      body: JSON.stringify({ terms: ingredientes.map(ing => ing.term), {} }),
     });
     const data = await res.json();
     items = (data.items || []).map((it, i) => ({ ...it, units: unidades[i] }));

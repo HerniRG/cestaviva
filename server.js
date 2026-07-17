@@ -91,29 +91,6 @@ async function algoliaSearch(query, warehouse, lang = 'es', hitsPerPage = 1) {
   return body;
 }
 
-// Mapa de prefijos de provincia (2 dígitos) a almacén de Mercadona
-const CP_TO_WH = {
-  '01':'vlc1','02':'vlc1','03':'vlc1','04':'vlc1','05':'mad1','06':'mad1',
-  '07':'vlc1','08':'bcn1','09':'mad1','10':'mad1','11':'vlc1','12':'vlc1',
-  '13':'mad1','14':'vlc1','15':'vlc1','16':'mad1','17':'bcn1','18':'vlc1',
-  '19':'mad1','20':'vlc1','21':'vlc1','22':'bcn1','23':'vlc1','24':'mad1',
-  '25':'bcn1','26':'mad1','27':'vlc1','28':'mad1','29':'vlc1','30':'vlc1',
-  '31':'vlc1','32':'vlc1','33':'vlc1','34':'mad1','35':'vlc1','36':'vlc1',
-  '37':'mad1','38':'vlc1','39':'vlc1','40':'mad1','41':'vlc1','42':'mad1',
-  '43':'bcn1','44':'vlc1','45':'mad1','46':'vlc1','47':'mad1','48':'vlc1',
-  '49':'mad1','50':'vlc1','51':'vlc1','52':'vlc1',
-};
-
-// GET /api/warehouse?cp=28001
-app.get('/api/warehouse', (req, res) => {
-  const cp = (req.query.cp || '').trim();
-  if (!/^\d{5}$/.test(cp)) {
-    return res.status(400).json({ error: 'Introduce un código postal válido de 5 dígitos' });
-  }
-  const prefix = cp.slice(0, 2);
-  const warehouse = CP_TO_WH[prefix] || DEFAULT_WAREHOUSE;
-  res.json({ postal_code: cp, warehouse });
-});
 
 // GET /api/search?q=leche&wh=mad1
 app.get('/api/search', async (req, res) => {
