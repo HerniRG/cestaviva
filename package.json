@@ -1,0 +1,16 @@
+{
+  "name": "cestaviva",
+  "version": "1.0.0",
+  "description": "Proxy Express hacia la API pública de Mercadona, para evitar CORS desde el navegador.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "cors": "^2.8.5"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
