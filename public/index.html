@@ -187,6 +187,44 @@
   .picker-meta { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: rgba(237,228,211,0.45); margin-top: 2px; }
   .picker-price { font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 14px; color: var(--mustard); flex-shrink: 0; }
   .picker-hint { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: rgba(237,228,211,0.3); padding: 6px 14px 8px; text-align: center; }
+  .picker-info-btn { background: rgba(237,228,211,0.08); border: none; color: rgba(237,228,211,0.5); font-size: 13px; width: 26px; height: 26px; border-radius: 50%; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; margin-left: 4px; }
+  .picker-info-btn:hover { background: rgba(237,228,211,0.15); color: var(--paper-soft); }
+
+  /* Modal ficha producto */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.72); z-index: 100; display: flex; align-items: flex-end; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+  @media (min-width: 600px) { .modal-overlay { align-items: center; } }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal-box { background: #232F27; border-radius: 20px 20px 0 0; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; padding: 0 0 32px; transform: translateY(20px); transition: transform 0.25s ease; }
+  @media (min-width: 600px) { .modal-box { border-radius: 20px; transform: scale(0.96); } }
+  .modal-overlay.open .modal-box { transform: none; }
+  .modal-photos { position: relative; background: rgba(237,228,211,0.05); border-radius: 20px 20px 0 0; overflow: hidden; }
+  .modal-photos img { width: 100%; height: 240px; object-fit: contain; display: block; }
+  .modal-photos-nav { display: flex; gap: 6px; justify-content: center; padding: 8px 0; }
+  .modal-photo-dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(237,228,211,0.2); cursor: pointer; transition: background 0.15s; }
+  .modal-photo-dot.active { background: var(--mustard); }
+  .modal-close { position: absolute; top: 12px; right: 14px; background: rgba(0,0,0,0.4); border: none; color: var(--paper-soft); font-size: 18px; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 2; }
+  .modal-body { padding: 20px 22px 0; }
+  .modal-brand { font-family: 'IBM Plex Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--mustard); margin-bottom: 4px; }
+  .modal-name { font-family: 'Space Grotesk', sans-serif; font-size: 20px; font-weight: 700; color: var(--paper-soft); margin: 0 0 6px; line-height: 1.2; }
+  .modal-cat { font-size: 12px; opacity: 0.45; margin-bottom: 14px; }
+  .modal-prices { display: flex; gap: 14px; align-items: baseline; margin-bottom: 18px; flex-wrap: wrap; }
+  .modal-price-main { font-family: 'IBM Plex Mono', monospace; font-size: 26px; font-weight: 700; color: var(--mustard); }
+  .modal-price-kg { font-family: 'IBM Plex Mono', monospace; font-size: 14px; opacity: 0.5; }
+  .modal-badge { font-family: 'IBM Plex Mono', monospace; font-size: 10px; padding: 3px 8px; border-radius: 5px; background: rgba(90,184,138,0.2); color: #5ab88a; }
+  .modal-badge.new { background: rgba(232,163,61,0.2); color: var(--mustard); }
+  .modal-section { margin-bottom: 16px; }
+  .modal-section-title { font-family: 'IBM Plex Mono', monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.4; margin-bottom: 6px; }
+  .modal-section-body { font-size: 13px; line-height: 1.6; opacity: 0.85; }
+  .modal-section-body strong { color: #e05a4e; font-weight: 600; }
+  .modal-divider { border: none; border-top: 1px solid rgba(237,228,211,0.08); margin: 16px 0; }
+  .modal-link { display: inline-flex; align-items: center; gap: 6px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--mustard); text-decoration: none; opacity: 0.7; margin-top: 8px; }
+  .modal-link:hover { opacity: 1; }
+  .modal-loading { text-align: center; padding: 60px 20px; font-family: 'IBM Plex Mono', monospace; font-size: 13px; opacity: 0.4; }
+  .product-tap { cursor: pointer; }
+  .product-tap:hover .receipt-line, .product-tap:hover { background: rgba(237,228,211,0.03); border-radius: 6px; }
+
+  /* Fotos en menú */
+  .menu-thumb { width: 32px; height: 32px; border-radius: 4px; object-fit: cover; flex-shrink: 0; background: rgba(237,228,211,0.07); }
 
   /* Pulso Mercadona */
   .pulso { display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 28px; }
@@ -209,6 +247,7 @@
   .ranking-title.down { color: #5ab88a; }
   .ranking-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid rgba(237,228,211,0.06); }
   .ranking-row:last-child { border-bottom: none; }
+  .ranking-thumb { width: 30px; height: 30px; border-radius: 4px; object-fit: cover; flex-shrink: 0; background: var(--line); }
   .ranking-pos { font-family: 'IBM Plex Mono', monospace; font-size: 11px; opacity: 0.3; width: 16px; flex-shrink: 0; }
   .ranking-name { flex: 1; font-size: 12.5px; line-height: 1.3; }
   .ranking-pct { font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600; flex-shrink: 0; }
@@ -374,6 +413,13 @@
 
 </div>
 
+<!-- Modal ficha producto -->
+<div class="modal-overlay" id="productModal">
+  <div class="modal-box" id="productModalBox">
+    <div class="modal-loading" id="productModalContent">Cargando…</div>
+  </div>
+</div>
+
 <script>
 
 /* ---------- Tabs ---------- */
@@ -387,6 +433,112 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     if (tab === 'historico' && !rankingLoaded) loadRanking(7);
   });
 });
+
+/* ---------- Modal ficha producto ---------- */
+const productModal = document.getElementById('productModal');
+const productModalContent = document.getElementById('productModalContent');
+let modalPhotoIdx = 0;
+let modalPhotos = [];
+
+function openModal(id, basicInfo) {
+  productModal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  productModalContent.innerHTML = `<div class="modal-loading">Cargando ficha…</div>`;
+  loadProduct(id, basicInfo);
+}
+
+function closeModal() {
+  productModal.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+productModal.addEventListener('click', e => { if (e.target === productModal) closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+async function loadProduct(id, basic) {
+  try {
+    const res = await fetch('/api/product/' + id);
+    const p = await res.json();
+    if (p.error) throw new Error(p.error);
+    modalPhotos = p.photos?.length ? p.photos : [p.thumbnail].filter(Boolean);
+    modalPhotoIdx = 0;
+    renderModal(p);
+  } catch {
+    productModalContent.innerHTML = `<div class="modal-body">
+      ${basic?.thumbnail ? `<img src="${basic.thumbnail}" style="width:100%;height:200px;object-fit:contain;border-radius:12px;margin-bottom:16px">` : ''}
+      <div class="modal-name">${basic?.name || 'Producto'}</div>
+      <p style="opacity:.4;font-size:13px">No se pudo cargar la ficha completa.</p>
+    </div>`;
+  }
+}
+
+function renderModal(p) {
+  const photosHtml = modalPhotos.length ? `
+    <div class="modal-photos">
+      <button class="modal-close" onclick="closeModal()">✕</button>
+      <img id="modalMainImg" src="${modalPhotos[0]}" alt="${p.name}">
+      ${modalPhotos.length > 1 ? `<div class="modal-photos-nav">
+        ${modalPhotos.map((_, i) => `<div class="modal-photo-dot ${i===0?'active':''}" onclick="switchPhoto(${i})"></div>`).join('')}
+      </div>` : ''}
+    </div>` : `<div style="text-align:right;padding:12px 14px 0"><button class="modal-close" style="position:static" onclick="closeModal()">✕</button></div>`;
+
+  const badges = [
+    p.isNew ? '<span class="modal-badge new">Nuevo</span>' : '',
+    p.priceDecreased ? '<span class="modal-badge">▼ Precio rebajado</span>' : '',
+    p.isPack ? `<span class="modal-badge">Pack ${p.totalUnits || ''} ${p.unitName || ''}</span>` : '',
+  ].filter(Boolean).join(' ');
+
+  const packInfo = p.isPack && p.totalUnits ? `${p.totalUnits} ${p.unitName || 'uds'} · ` : '';
+  const taxInfo = p.taxPct ? ` (IVA ${parseFloat(p.taxPct)}%)` : '';
+
+  productModalContent.innerHTML = `
+    ${photosHtml}
+    <div class="modal-body">
+      ${p.brand ? `<div class="modal-brand">${p.brand}</div>` : ''}
+      <h2 class="modal-name">${p.name}</h2>
+      ${p.category ? `<div class="modal-cat">${p.category}</div>` : ''}
+      <div class="modal-prices">
+        <span class="modal-price-main">${p.price?.toFixed(2)}€</span>
+        ${p.pricePerKg ? `<span class="modal-price-kg">${p.pricePerKg.toFixed(2)}€/${p.unit || 'kg'}</span>` : ''}
+        ${badges}
+      </div>
+      <div style="font-size:12px;opacity:.4;margin-top:-10px;margin-bottom:16px">${packInfo}${taxInfo}</div>
+      <hr class="modal-divider">
+      ${p.ingredients ? `<div class="modal-section">
+        <div class="modal-section-title">Ingredientes</div>
+        <div class="modal-section-body">${p.ingredients}</div>
+      </div>` : ''}
+      ${p.allergens ? `<div class="modal-section">
+        <div class="modal-section-title">⚠️ Alergias</div>
+        <div class="modal-section-body">${p.allergens}</div>
+      </div>` : ''}
+      ${p.ingredients || p.allergens ? '<hr class="modal-divider">' : ''}
+      ${p.origin ? `<div class="modal-section">
+        <div class="modal-section-title">Origen</div>
+        <div class="modal-section-body">${p.origin}</div>
+      </div>` : ''}
+      ${p.storageInstructions ? `<div class="modal-section">
+        <div class="modal-section-title">Conservación</div>
+        <div class="modal-section-body">${p.storageInstructions}</div>
+      </div>` : ''}
+      ${p.mandatoryMentions ? `<div class="modal-section">
+        <div class="modal-section-title">Menciones legales</div>
+        <div class="modal-section-body">${p.mandatoryMentions}</div>
+      </div>` : ''}
+      ${p.suppliers?.length ? `<div class="modal-section">
+        <div class="modal-section-title">Fabricantes</div>
+        <div class="modal-section-body">${p.suppliers.join(', ')}</div>
+      </div>` : ''}
+      ${p.shareUrl ? `<a class="modal-link" href="${p.shareUrl}" target="_blank" rel="noopener">Ver en Mercadona →</a>` : ''}
+    </div>`;
+}
+
+function switchPhoto(idx) {
+  modalPhotoIdx = idx;
+  const img = document.getElementById('modalMainImg');
+  if (img) img.src = modalPhotos[idx];
+  document.querySelectorAll('.modal-photo-dot').forEach((d, i) => d.classList.toggle('active', i === idx));
+}
 
 /* ---------- Pulso Mercadona ---------- */
 function truncName(name, max = 28) { return name.length > max ? name.slice(0, max) + '…' : name; }
@@ -442,13 +594,18 @@ let rankingDiasUp = 7, rankingDiasDown = 7;
 
 function renderRankingRows(items, type) {
   if (!items.length) return `<div class="ranking-nodata">Sin datos todavía.<br>El cron job acumulará datos cada noche.</div>`;
-  return items.map((it, i) => `
-    <div class="ranking-row">
+  return items.map((it, i) => {
+    const safeN = (it.name||'').replace(/'/g,"\\'");
+    const thumb = it.thumbnail ? `<img class="ranking-thumb" src="${it.thumbnail}" alt="" loading="lazy" onerror="this.style.display='none'">` : '';
+    return `
+    <div class="ranking-row" style="cursor:pointer" onclick="openModal('${it.id}',{name:'${safeN}',thumbnail:'${it.thumbnail||''}'})">
+      ${thumb}
       <span class="ranking-pos">${i + 1}</span>
       <span class="ranking-name">${truncName(it.name, 32)}</span>
       <span class="ranking-abs">${it.priceBase.toFixed(2)}→${it.priceNow.toFixed(2)}€</span>
       <span class="ranking-pct ${type}">${type === 'up' ? '+' : ''}${it.pct}%</span>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 async function loadRanking(dias) {
@@ -620,8 +777,9 @@ async function searchTerm() {
             <div class="picker-meta">${perKg}</div>
           </div>
           <div class="picker-price">${r.price?.toFixed(2)}€</div>
+          <button class="picker-info-btn" title="Ver ficha" onclick="event.stopPropagation();openModal('${r.id}',{name:'${r.name.replace(/'/g,"\\'")}',thumbnail:'${r.thumbnail||''}'})">ℹ</button>
         </div>`;
-      }).join('') + '<div class="picker-hint">Elige el producto que quieras añadir</div>';
+      }).join('') + '<div class="picker-hint">Toca para añadir · ℹ para ver la ficha</div>';
       picker.style.display = 'block';
       picker.querySelectorAll('.picker-item').forEach((el, i) => {
         el.addEventListener('click', () => pickItem(data.results[i], term));
@@ -667,7 +825,7 @@ function renderBasket() {
       ? `<span class="per-kg">${it.pricePerKg.toFixed(2)}€/${it.unit || 'kg'}</span>`
       : '';
     return `
-    <div class="receipt-line" data-id="${it.id || ''}" style="animation-delay:${i * 0.05}s">
+    <div class="receipt-line" data-id="${it.id || ''}" style="animation-delay:${i * 0.05}s" onclick="openModal('${it.id}',${JSON.stringify({name:it.name,thumbnail:it.thumbnail||''})})">
       ${thumb}
       <span class="name">${it.name}${perKgTag}</span>
       <div class="qty-ctrl">
@@ -1327,7 +1485,12 @@ menuForm.addEventListener('submit', async (e) => {
     const perKgTag = it.pricePerKg
       ? `<span class="per-kg">${it.pricePerKg.toFixed(2)}€/${it.unit || 'kg'}</span>`
       : '';
-    return `<div class="receipt-line" style="animation-delay:${i * 0.06}s">
+    const thumbHtml = it.thumbnail
+      ? `<img class="thumb" src="${it.thumbnail}" alt="" loading="lazy" onerror="this.style.display='none'">`
+      : '<span class="thumb"></span>';
+    const safeN = (it.name||'').replace(/'/g,"\\'");
+    return `<div class="receipt-line" style="animation-delay:${i * 0.06}s;cursor:pointer" onclick="openModal('${it.id}',{name:'${safeN}',thumbnail:'${it.thumbnail||''}'})">
+      ${thumbHtml}
       <span class="name">${it.name}${qtyLabel}${perKgTag}</span>
       <div class="price-col"><span class="price">${price}€</span></div>
     </div>`;

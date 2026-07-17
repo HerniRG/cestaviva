@@ -193,6 +193,7 @@ app.get('/api/cron/snapshot', async (req, res) => {
     if (!historico.catalog[id]) {
       historico.catalog[id] = {
         name: h.display_name,
+        thumbnail: h.thumbnail || null,
         pricePerKg: parseFloat(h.price_instructions?.bulk_price) || null,
         unit: h.price_instructions?.reference_format || null,
       };
@@ -262,6 +263,67 @@ app.post('/api/history/basket', (req, res) => {
   });
 });
 
+// GET /api/product/:id  — ficha completa del producto (fotos, nutrición, alergias…)
+app.get('/api/product/:id', async (req, res) => {
+  const id = req.params.id;
+  if (!id || !/^\d+$/.test(id)) return res.status(400).json({ error: 'ID inválido' });
+  try {
+    const { status, body } = await new Promise((resolve, reject) => {
+      const r = https.request({
+        hostname: 'tienda.mercadona.es',
+        path: `/api/products/${id}/`,
+        method: 'GET',
+        headers: { 'Accept': 'application/json', 'Accept-Language': 'es', 'User-Agent': 'Mozilla/5.0' },
+      }, (resp) => {
+        let data = '';
+        resp.on('data', c => data += c);
+        resp.on('end', () => { try { resolve({ status: resp.statusCode, body: JSON.parse(data) }); } catch { resolve({ status: resp.statusCode, body: data }); } });
+      });
+      r.on('error', reject); r.end();
+    });
+    if (status !== 200) return res.status(status).json({ error: 'Producto no encontrado' });
+    const p = body;
+    res.json({
+      id: p.id,
+      name: p.display_name,
+      brand: p.brand,
+      legalName: p.details?.legal_name,
+      description: p.details?.description,
+      origin: p.origin,
+      packaging: p.packaging,
+      photos: (p.photos || []).map(ph => ph.regular || ph.thumbnail),
+      thumbnail: p.thumbnail,
+      price: parseFloat(p.price_instructions?.unit_price),
+      pricePerKg: parseFloat(p.price_instructions?.bulk_price) || null,
+      unit: p.price_instructions?.reference_format || null,
+      unitSize: p.price_instructions?.unit_size,
+      unitName: p.price_instructions?.unit_name,
+      totalUnits: p.price_instructions?.total_units,
+      taxPct: p.price_instructions?.tax_percentage,
+      isPack: p.price_instructions?.is_pack,
+      isNew: p.price_instructions?.is_new,
+      priceDecreased: p.price_instructions?.price_decreased,
+      allergens: p.nutrition_information?.allergens || null,
+      ingredients: p.nutrition_information?.ingredients || null,
+      storageInstructions: p.details?.storage_instructions || null,
+      usageInstructions: p.details?.usage_instructions || null,
+      mandatoryMentions: p.details?.mandatory_mentions || null,
+      suppliers: (p.details?.suppliers || []).map(s => s.name),
+      category: (() => {
+        const cats = p.categories?.[0];
+        if (!cats) return null;
+        const sub = cats.categories?.[0];
+        const subsub = sub?.categories?.[0];
+        return [cats.name, sub?.name, subsub?.name].filter(Boolean).join(' › ');
+      })(),
+      shareUrl: p.share_url,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(502).json({ error: 'Error obteniendo ficha del producto', detail: err.message });
+  }
+});
+
 // GET /api/ranking/subidas?dias=7&top=10  — productos que más han subido
 app.get('/api/ranking/subidas', (req, res) => {
   const dias = Math.min(parseInt(req.query.dias) || 7, 90);
@@ -285,7 +347,7 @@ app.get('/api/ranking/subidas', (req, res) => {
     if (diff <= 0) continue;
     const meta = historico.catalog[id];
     if (!meta) continue;
-    items.push({ id, name: meta.name, priceNow, priceBase, diff: parseFloat(diff.toFixed(2)), pct: parseFloat(pct.toFixed(1)) });
+    items.push({ id, name: meta.name, thumbnail: meta.thumbnail || null, priceNow, priceBase, diff: parseFloat(diff.toFixed(2)), pct: parseFloat(pct.toFixed(1)) });
   }
   items.sort((a, b) => b.pct - a.pct);
   res.json({ available: true, dateFrom: baseDate, dateTo: latest, dias, items: items.slice(0, top) });
@@ -314,7 +376,7 @@ app.get('/api/ranking/bajadas', (req, res) => {
     if (diff >= 0) continue;
     const meta = historico.catalog[id];
     if (!meta) continue;
-    items.push({ id, name: meta.name, priceNow, priceBase, diff: parseFloat(diff.toFixed(2)), pct: parseFloat(pct.toFixed(1)) });
+    items.push({ id, name: meta.name, thumbnail: meta.thumbnail || null, priceNow, priceBase, diff: parseFloat(diff.toFixed(2)), pct: parseFloat(pct.toFixed(1)) });
   }
   items.sort((a, b) => a.pct - b.pct);
   res.json({ available: true, dateFrom: baseDate, dateTo: latest, dias, items: items.slice(0, top) });
