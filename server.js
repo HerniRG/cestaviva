@@ -1,6 +1,7 @@
 // Proxy Express para la API pública (sin login) de Mercadona.
 // Llama directamente a Algolia (búsqueda y precios). Sin dependencia de binarios externos.
 
+try { require('dotenv').config(); } catch {}
 const express = require('express');
 const cors = require('cors');
 const https = require('https');

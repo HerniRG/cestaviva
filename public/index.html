@@ -72,12 +72,28 @@
   .receipt-line.error { color: var(--tomato); font-style: italic; }
   @keyframes lineIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
 
-  /* Histórico de precios */
+  /* Histórico de precios — sparkline en cesto */
   .sparkline { display: block; margin-top: 3px; }
   .price-change { font-size: 10px; font-family: 'IBM Plex Mono', monospace; }
   .price-change.up { color: #e05a4e; }
   .price-change.down { color: #5ab88a; }
   .price-change.flat { opacity: 0.4; }
+
+  /* Histórico — tab completo */
+  .hist-product-name { font-family: 'Space Grotesk', sans-serif; font-size: 15px; font-weight: 700; margin-bottom: 12px; color: var(--paper-soft); }
+  .hist-stats { display: flex; flex-wrap: wrap; gap: 10px; }
+  .hist-stat { background: rgba(237,228,211,0.06); border-radius: 8px; padding: 10px 14px; flex: 1; min-width: 80px; }
+  .hist-stat .label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; opacity: 0.5; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+  .hist-stat .val { font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 15px; }
+  .hist-stat .val.up { color: #e05a4e; }
+  .hist-stat .val.down { color: #5ab88a; }
+
+  .hist-chart-wrap { background: var(--bg-soft); border: 1px solid rgba(237,228,211,0.08); border-radius: 14px; padding: 24px; }
+  .hist-chart-title { font-family: 'Space Grotesk', sans-serif; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--mustard); margin-bottom: 16px; }
+  .hist-chart-svg { width: 100%; overflow: visible; }
+  .hist-no-data { font-family: 'IBM Plex Mono', monospace; font-size: 13px; opacity: 0.5; text-align: center; padding: 40px 0; }
+  .hist-axis-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; fill: rgba(237,228,211,0.35); }
+  .hist-tooltip { position: absolute; background: var(--ink); color: var(--paper-soft); font-family: 'IBM Plex Mono', monospace; font-size: 11px; padding: 6px 10px; border-radius: 6px; pointer-events: none; white-space: nowrap; opacity: 0; transition: opacity 0.1s; z-index: 10; }
 
   /* Panel inflación personal */
   .inflation-banner { background: rgba(255,255,255,0.04); border: 1px solid rgba(237,228,211,0.1); border-radius: 10px; padding: 12px 16px; margin-bottom: 14px; display: flex; align-items: center; gap: 12px; font-size: 12.5px; }
@@ -185,6 +201,7 @@
   <div class="tabs">
     <button class="tab-btn active" data-tab="search">Búsqueda libre</button>
     <button class="tab-btn" data-tab="menu">Generador de menú</button>
+    <button class="tab-btn" data-tab="historico">Histórico</button>
   </div>
 
   <!-- TAB: búsqueda libre -->
@@ -258,6 +275,30 @@
     </div>
   </div>
 
+  <!-- TAB: histórico de precios -->
+  <div class="tab-panel" id="tab-historico">
+    <div class="grid">
+      <section class="panel">
+        <h2>Busca un producto</h2>
+        <div class="search-wrap">
+          <div class="search-row">
+            <input type="text" id="histInput" placeholder="ej. leche entera, aceite, pollo…" autocomplete="off">
+            <button id="histSearchBtn">Buscar</button>
+          </div>
+          <div class="picker" id="histPicker" style="display:none"></div>
+        </div>
+        <p class="search-hint">Selecciona el producto para ver su histórico completo de precios.</p>
+        <div id="histInfo" style="display:none; margin-top:20px;">
+          <div class="hist-product-name" id="histProductName"></div>
+          <div class="hist-stats" id="histStats"></div>
+        </div>
+      </section>
+      <section id="histResults">
+        <div class="empty-state">El histórico de precios aparecerá aquí →</div>
+      </section>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -305,7 +346,7 @@ function pickItem(item, term) {
 const historyCache = {};
 
 function makeSpark(history, w = 60, h = 22) {
-  if (history.length < 2) return '';
+  if (history.length < 7) return ''; // ocultar con pocos puntos — se ve feo
   const prices = history.map(h => h.price);
   const min = Math.min(...prices);
   const max = Math.max(...prices);
@@ -515,6 +556,153 @@ function copyAndFlash(text, btnId, label) {
 
 // Renderiza la cesta guardada al cargar
 if (basket.length > 0) renderBasket();
+
+/* ---------- Tab Histórico ---------- */
+const histInput = document.getElementById('histInput');
+const histSearchBtn = document.getElementById('histSearchBtn');
+const histPicker = document.getElementById('histPicker');
+const histResults = document.getElementById('histResults');
+const histInfo = document.getElementById('histInfo');
+const histProductName = document.getElementById('histProductName');
+const histStats = document.getElementById('histStats');
+const tooltip = document.createElement('div');
+tooltip.className = 'hist-tooltip';
+document.body.appendChild(tooltip);
+
+function closeHistPicker() { histPicker.style.display = 'none'; histPicker.innerHTML = ''; }
+
+async function histSearch() {
+  const term = histInput.value.trim();
+  if (!term) return;
+  histSearchBtn.disabled = true; histSearchBtn.textContent = '…';
+  closeHistPicker();
+  try {
+    const res = await fetch('/api/search?q=' + encodeURIComponent(term));
+    const data = await res.json();
+    if (!data.results?.length) { histResults.innerHTML = '<div class="empty-state">Sin resultados para "' + term + '"</div>'; return; }
+    histPicker.innerHTML = data.results.map((r, i) => `
+      <div class="picker-item" data-idx="${i}">
+        <img class="picker-thumb" src="${r.thumbnail || ''}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
+        <div class="picker-info">
+          <div class="picker-name">${r.name}</div>
+          <div class="picker-meta">${r.pricePerKg ? r.pricePerKg.toFixed(2) + '€/' + (r.unit || 'kg') : ''}</div>
+        </div>
+        <div class="picker-price">${r.price?.toFixed(2)}€</div>
+      </div>`).join('') + '<div class="picker-hint">Elige el producto para ver su histórico</div>';
+    histPicker.style.display = 'block';
+    histPicker.querySelectorAll('.picker-item').forEach((el, i) => {
+      el.addEventListener('click', () => { closeHistPicker(); loadHistorico(data.results[i]); });
+    });
+  } catch { histResults.innerHTML = '<div class="empty-state">Error al conectar con el servidor.</div>'; }
+  histSearchBtn.disabled = false; histSearchBtn.textContent = 'Buscar';
+}
+
+histSearchBtn.addEventListener('click', histSearch);
+histInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); histSearch(); } });
+document.addEventListener('click', e => { if (!e.target.closest('#histPicker') && !e.target.closest('#histInput')) closeHistPicker(); });
+
+function buildFullChart(history, currentPrice) {
+  if (!history.length) return `<div class="hist-no-data">Sin datos históricos todavía.<br>El cron job los irá acumulando cada noche.</div>`;
+  const W = 500, H = 160, PAD = { top: 12, right: 16, bottom: 28, left: 44 };
+  const cW = W - PAD.left - PAD.right;
+  const cH = H - PAD.top - PAD.bottom;
+  const prices = history.map(d => d.price);
+  const dates = history.map(d => d.date);
+  const minP = Math.min(...prices) * 0.97;
+  const maxP = Math.max(...prices) * 1.03;
+  const range = maxP - minP || 0.1;
+  const px = (i) => PAD.left + (i / (history.length - 1 || 1)) * cW;
+  const py = (p) => PAD.top + cH - ((p - minP) / range) * cH;
+  const last = prices[prices.length - 1];
+  const first = prices[0];
+  const lineColor = last > first ? '#e05a4e' : last < first ? '#5ab88a' : 'rgba(237,228,211,0.5)';
+
+  // Línea principal
+  const pathD = prices.map((p, i) => `${i === 0 ? 'M' : 'L'}${px(i).toFixed(1)},${py(p).toFixed(1)}`).join(' ');
+  // Área rellena
+  const areaD = pathD + ` L${px(prices.length-1).toFixed(1)},${(PAD.top+cH).toFixed(1)} L${PAD.left},${(PAD.top+cH).toFixed(1)} Z`;
+
+  // Ejes Y: 4 niveles
+  const yTicks = [0, 0.33, 0.66, 1].map(t => ({ val: minP + t * range, y: PAD.top + cH - t * cH }));
+  const yLines = yTicks.map(t => `
+    <line x1="${PAD.left}" y1="${t.y.toFixed(1)}" x2="${W - PAD.right}" y2="${t.y.toFixed(1)}" stroke="rgba(237,228,211,0.07)" stroke-width="1"/>
+    <text class="hist-axis-label" x="${PAD.left - 4}" y="${(t.y + 3.5).toFixed(1)}" text-anchor="end">${t.val.toFixed(2)}</text>`).join('');
+
+  // Ejes X: hasta 5 fechas
+  const step = Math.max(1, Math.floor(history.length / 4));
+  const xLabels = history.filter((_, i) => i % step === 0 || i === history.length - 1).map(d => {
+    const idx = history.indexOf(d);
+    const dt = new Date(d.date);
+    const label = dt.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+    return `<text class="hist-axis-label" x="${px(idx).toFixed(1)}" y="${H - 4}" text-anchor="middle">${label}</text>`;
+  }).join('');
+
+  // Punto actual
+  const lastX = px(prices.length - 1), lastY = py(last);
+
+  // Puntos interactivos invisibles para tooltip
+  const hitPoints = prices.map((p, i) => {
+    const dt = new Date(dates[i]).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+    return `<circle cx="${px(i).toFixed(1)}" cy="${py(p).toFixed(1)}" r="6" fill="transparent"
+      onmouseenter="showTip(event,'${dt}: ${p.toFixed(2)}€')"
+      onmouseleave="hideTip()"/>`;
+  }).join('');
+
+  return `<div class="hist-chart-wrap" style="position:relative">
+    <div class="hist-chart-title">Evolución del precio</div>
+    <svg class="hist-chart-svg" viewBox="0 0 ${W} ${H}">
+      <defs>
+        <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="${lineColor}" stop-opacity="0.2"/>
+          <stop offset="100%" stop-color="${lineColor}" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      ${yLines}${xLabels}
+      <path d="${areaD}" fill="url(#areaGrad)"/>
+      <path d="${pathD}" fill="none" stroke="${lineColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="${lastX.toFixed(1)}" cy="${lastY.toFixed(1)}" r="4" fill="${lineColor}"/>
+      ${hitPoints}
+    </svg>
+  </div>`;
+}
+
+function showTip(e, text) {
+  tooltip.textContent = text;
+  tooltip.style.opacity = '1';
+  tooltip.style.left = (e.pageX + 12) + 'px';
+  tooltip.style.top = (e.pageY - 28) + 'px';
+}
+function hideTip() { tooltip.style.opacity = '0'; }
+
+async function loadHistorico(product) {
+  histProductName.textContent = product.name;
+  histStats.innerHTML = '';
+  histInfo.style.display = 'block';
+  histResults.innerHTML = '<div class="empty-state">Cargando histórico…</div>';
+  try {
+    const res = await fetch('/api/history?id=' + product.id);
+    const data = await res.json();
+    const h = data.history || [];
+    const currentPrice = product.price;
+
+    // Stats
+    const changeAbs = data.change !== undefined ? data.change : 0;
+    const changePct = data.changePct !== undefined ? data.changePct : 0;
+    const cls = changeAbs > 0 ? 'up' : changeAbs < 0 ? 'down' : '';
+    const arrow = changeAbs > 0 ? '▲' : changeAbs < 0 ? '▼' : '—';
+    const days = h.length;
+    histStats.innerHTML = `
+      <div class="hist-stat"><div class="label">Precio actual</div><div class="val">${currentPrice.toFixed(2)}€</div></div>
+      <div class="hist-stat"><div class="label">Mínimo</div><div class="val down">${data.min !== undefined ? data.min.toFixed(2) : '—'}€</div></div>
+      <div class="hist-stat"><div class="label">Máximo</div><div class="val up">${data.max !== undefined ? data.max.toFixed(2) : '—'}€</div></div>
+      <div class="hist-stat"><div class="label">Variación total</div><div class="val ${cls}">${arrow} ${Math.abs(changeAbs).toFixed(2)}€ (${Math.abs(changePct)}%)</div></div>
+      <div class="hist-stat"><div class="label">Días de datos</div><div class="val">${days}</div></div>`;
+
+    histResults.innerHTML = buildFullChart(h, currentPrice);
+  } catch {
+    histResults.innerHTML = '<div class="empty-state">Error cargando el histórico.</div>';
+  }
+}
 
 /* ---------- Generador de menú ---------- */
 // 3 variantes por objetivo → rotación aleatoria en cada generación
