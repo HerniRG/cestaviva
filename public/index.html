@@ -63,7 +63,8 @@
 
   /* Recibo con thumbnail */
   .receipt-line { display: flex; align-items: center; gap: 10px; padding: 5px 0; opacity: 0; animation: lineIn 0.35s ease forwards; }
-  .receipt-line .thumb { width: 32px; height: 32px; border-radius: 4px; object-fit: cover; flex-shrink: 0; background: var(--line); }
+  .receipt-line .thumb { width: 32px; height: 32px; border-radius: 4px; object-fit: cover; flex-shrink: 0; background: var(--line); cursor: pointer; transition: opacity 0.15s; }
+  .receipt-line .thumb:hover { opacity: 0.75; }
   .receipt-line .name { flex: 1; font-size: 12.5px; display: flex; flex-direction: column; gap: 1px; }
   .per-kg { font-size: 10px; opacity: 0.5; font-family: 'IBM Plex Mono', monospace; }
   .receipt-line .price-col { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
@@ -826,16 +827,19 @@ function renderBasket() {
   const total = basket.reduce((s, it) => s + (it.price || 0) * (it.qty || 1), 0);
   const lines = basket.map((it, i) => {
     const lineTotal = ((it.price || 0) * (it.qty || 1)).toFixed(2);
+    const _n = (it.name||'').replace(/'/g,"\\'");
+    const _t = (it.thumbnail||'').replace(/'/g,"\\'");
+    const modalArgs = `'${it.id}',{name:'${_n}',thumbnail:'${_t}'}`;
     const thumb = it.thumbnail
-      ? `<img class="thumb" src="${it.thumbnail}" alt="" loading="lazy">`
-      : `<span class="thumb"></span>`;
+      ? `<img class="thumb" src="${it.thumbnail}" alt="" loading="lazy" onclick="event.stopPropagation();openModal(${modalArgs})">`
+      : `<span class="thumb" onclick="event.stopPropagation();openModal(${modalArgs})"></span>`;
     const perKgTag = it.pricePerKg
       ? `<span class="per-kg">${it.pricePerKg.toFixed(2)}€/${it.unit || 'kg'}</span>`
       : '';
     return `
-    <div class="receipt-line" data-id="${it.id || ''}" style="animation-delay:${i * 0.05}s" onclick="openModal('${it.id}',${JSON.stringify({name:it.name,thumbnail:it.thumbnail||''})})">
+    <div class="receipt-line" data-id="${it.id || ''}" style="animation-delay:${i * 0.05}s">
       ${thumb}
-      <span class="name">${it.name}${perKgTag}</span>
+      <span class="name" style="cursor:pointer" onclick="openModal(${modalArgs})">${it.name}${perKgTag}</span>
       <div class="qty-ctrl">
         <button class="qty-btn" onclick="changeQty(${i},-1)">−</button>
         <span class="qty-num">${it.qty || 1}</span>
@@ -1497,11 +1501,12 @@ menuForm.addEventListener('submit', async (e) => {
     const perKgTag = it.pricePerKg
       ? `<span class="per-kg">${it.pricePerKg.toFixed(2)}€/${it.unit || 'kg'}</span>`
       : '';
-    const thumbHtml = it.thumbnail
-      ? `<img class="thumb" src="${it.thumbnail}" alt="" loading="lazy" onerror="this.style.display='none'">`
-      : '<span class="thumb"></span>';
     const safeN = (it.name||'').replace(/'/g,"\\'");
-    return `<div class="receipt-line" style="animation-delay:${i * 0.06}s;cursor:pointer" onclick="openModal('${it.id}',{name:'${safeN}',thumbnail:'${it.thumbnail||''}'})">
+    const mArgs = `'${it.id}',{name:'${safeN}',thumbnail:'${it.thumbnail||''}'}`;
+    const thumbHtml = it.thumbnail
+      ? `<img class="thumb" src="${it.thumbnail}" alt="" loading="lazy" onerror="this.style.display='none'" onclick="event.stopPropagation();openModal(${mArgs})">`
+      : '<span class="thumb"></span>';
+    return `<div class="receipt-line" style="animation-delay:${i * 0.06}s;cursor:pointer" onclick="openModal(${mArgs})">
       ${thumbHtml}
       <span class="name">${it.name}${qtyLabel}${perKgTag}</span>
       <div class="price-col"><span class="price">${price}€</span></div>
