@@ -126,6 +126,17 @@ app.post('/api/batch', async (req, res) => {
 
 app.get('/health', (_req, res) => res.json({ status: 'ok', warehouse: DEFAULT_WAREHOUSE }));
 
-app.listen(PORT, () => {
+// Pre-calienta el binario del CLI al arrancar para que la primera petición real no espere la descarga
+async function warmupCli() {
+  try {
+    await execFileAsync(CLI_BIN, ['--version'], { timeout: 30000 });
+    console.log('CLI de Mercadona listo.');
+  } catch (e) {
+    console.warn('Aviso: no se pudo pre-calentar el CLI:', e.message);
+  }
+}
+
+app.listen(PORT, async () => {
   console.log(`Mercadona proxy escuchando en el puerto ${PORT} (almacén por defecto: ${DEFAULT_WAREHOUSE})`);
+  await warmupCli();
 });
