@@ -203,18 +203,6 @@ app.get('/api/cron/snapshot', async (req, res) => {
   }
   historico.snapshots[today] = snapshot;
 
-  // Guardar novedades
-  historico.novedades = hits
-    .filter(h => h.price_instructions?.is_new)
-    .map(h => ({
-      id: h.id,
-      name: h.display_name,
-      price: parseFloat(h.price_instructions?.unit_price),
-      pricePerKg: parseFloat(h.price_instructions?.bulk_price) || null,
-      unit: h.price_instructions?.reference_format || null,
-      thumbnail: h.thumbnail || null,
-    }));
-
   // Mantener solo 365 días
   const dates = Object.keys(historico.snapshots).sort();
   if (dates.length > 365) {
@@ -222,7 +210,7 @@ app.get('/api/cron/snapshot', async (req, res) => {
   }
 
   saveHistorico(historico);
-  res.json({ date: today, products: Object.keys(snapshot).length, novedades: historico.novedades.length, totalDays: Object.keys(historico.snapshots).length });
+  res.json({ date: today, products: Object.keys(snapshot).length, totalDays: Object.keys(historico.snapshots).length });
 });
 
 // GET /api/history?id=PRODUCT_ID  — historial de precio de un producto
@@ -337,38 +325,6 @@ app.get('/api/product/:id', async (req, res) => {
     res.status(502).json({ error: 'Error obteniendo ficha del producto', detail: err.message });
   }
 });
-
-// GET /api/novedades?top=20  — productos nuevos (desde historico.json, o browse en vivo)
-app.get('/api/novedades', async (req, res) => {
-  const top = Math.min(parseInt(req.query.top) || 20, 50);
-  const wh = resolveWarehouse(req);
-  try {
-    const historico = loadHistorico();
-    if (historico.novedades?.length) {
-      return res.json({ items: historico.novedades.slice(0, top), source: 'cache' });
-    }
-    // Fallback: browse completo y filtrar
-    const hits = await algoliaBrowseAll(wh);
-    const items = hits
-      .filter(h => h.price_instructions?.is_new)
-      .slice(0, top)
-      .map(h => ({
-        id: h.id,
-        name: h.display_name,
-        price: parseFloat(h.price_instructions?.unit_price),
-        pricePerKg: parseFloat(h.price_instructions?.bulk_price) || null,
-        unit: h.price_instructions?.reference_format || null,
-        thumbnail: h.thumbnail || null,
-      }));
-    // Guardar para futuras peticiones
-    historico.novedades = items;
-    saveHistorico(historico);
-    res.json({ items, source: 'live' });
-  } catch (err) {
-    res.status(502).json({ error: 'Error obteniendo novedades', detail: err.message });
-  }
-});
-
 
 // GET /api/ranking/subidas?dias=7&top=10  — productos que más han subido
 app.get('/api/ranking/subidas', (req, res) => {
