@@ -79,8 +79,8 @@ app.get('/api/search', async (req, res) => {
         id: h.id,
         name: h.display_name,
         price: parseFloat(h.price_instructions?.unit_price),
-        pricePerKg: parseFloat(h.price_instructions?.bulk_price),
-        unit: h.price_instructions?.reference_format,
+        pricePerKg: parseFloat(h.price_instructions?.bulk_price) || null,
+        unit: h.price_instructions?.reference_format || null,
         thumbnail: h.thumbnail,
       })),
     });
@@ -107,8 +107,8 @@ app.post('/api/batch', async (req, res) => {
           id: first.id,
           name: first.display_name,
           price: parseFloat(first.price_instructions?.unit_price),
-          pricePerKg: parseFloat(first.price_instructions?.bulk_price),
-          unit: first.price_instructions?.reference_format,
+          pricePerKg: parseFloat(first.price_instructions?.bulk_price) || null,
+          unit: first.price_instructions?.reference_format || null,
         };
       }).catch(err => ({ term, error: err.message })))
     );
