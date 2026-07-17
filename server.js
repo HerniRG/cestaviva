@@ -79,7 +79,7 @@ function httpsGet(hostname, path, headers = {}) {
   });
 }
 
-async function algoliaSearch(query, warehouse, lang = 'es', hitsPerPage = 1) {
+async function algoliaSearch(query, warehouse, lang = 'es', hitsPerPage = 5) {
   const indexName = `${ALGOLIA_INDEX_BASE}_${warehouse}_${lang}`;
   const hostname = `${ALGOLIA_APP_ID.toLowerCase()}-dsn.algolia.net`;
   const path = `/1/indexes/${indexName}/query`;
@@ -98,18 +98,20 @@ app.get('/api/search', async (req, res) => {
   if (!q) return res.status(400).json({ error: 'Falta el parámetro q' });
   const wh = resolveWarehouse(req);
   try {
-    const data = await algoliaSearch(q, wh, 'es', 1);
-    const first = data?.hits?.[0];
-    if (!first) return res.status(404).json({ error: 'Sin resultados', query: q });
+    const data = await algoliaSearch(q, wh, 'es', 5);
+    const hits = data?.hits || [];
+    if (!hits.length) return res.status(404).json({ error: 'Sin resultados', query: q });
     res.json({
       query: q,
       warehouse: wh,
-      id: first.id,
-      name: first.display_name,
-      price: parseFloat(first.price_instructions?.unit_price),
-      pricePerKg: parseFloat(first.price_instructions?.bulk_price),
-      unit: first.price_instructions?.reference_format,
-      thumbnail: first.thumbnail,
+      results: hits.map(h => ({
+        id: h.id,
+        name: h.display_name,
+        price: parseFloat(h.price_instructions?.unit_price),
+        pricePerKg: parseFloat(h.price_instructions?.bulk_price),
+        unit: h.price_instructions?.reference_format,
+        thumbnail: h.thumbnail,
+      })),
     });
   } catch (err) {
     console.error(err);

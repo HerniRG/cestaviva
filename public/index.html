@@ -127,6 +127,34 @@
 
   .footer-note { text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: rgba(237,228,211,0.35); margin-top: 56px; }
   .footer-note a { color: var(--mustard); }
+
+  /* Picker de resultados */
+  .search-wrap { position: relative; }
+  .picker {
+    position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 100;
+    background: #1a2b1f; border: 1px solid rgba(232,163,61,0.35);
+    border-radius: 10px; overflow: hidden;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+    animation: pickerIn 0.15s ease;
+  }
+  @keyframes pickerIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+  .picker-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 14px; cursor: pointer;
+    border-bottom: 1px solid rgba(237,228,211,0.06);
+    transition: background 0.1s;
+  }
+  .picker-item:last-child { border-bottom: none; }
+  .picker-item:hover { background: rgba(232,163,61,0.1); }
+  .picker-thumb {
+    width: 44px; height: 44px; border-radius: 6px; object-fit: cover;
+    flex-shrink: 0; background: rgba(237,228,211,0.07);
+  }
+  .picker-info { flex: 1; min-width: 0; }
+  .picker-name { font-size: 13.5px; color: var(--paper-soft); line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .picker-meta { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: rgba(237,228,211,0.45); margin-top: 2px; }
+  .picker-price { font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 14px; color: var(--mustard); flex-shrink: 0; }
+  .picker-hint { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: rgba(237,228,211,0.3); padding: 6px 14px 8px; text-align: center; }
 </style>
 </head>
 <body>
@@ -148,11 +176,14 @@
     <div class="grid">
       <section class="panel">
         <h2>Añade lo que quieras</h2>
-        <div class="search-row">
-          <input type="text" id="searchInput" placeholder="ej. leche, plátano, papel higiénico…" autocomplete="off">
-          <button id="searchAddBtn">Añadir</button>
+        <div class="search-wrap">
+          <div class="search-row">
+            <input type="text" id="searchInput" placeholder="ej. leche, plátano, papel higiénico…" autocomplete="off">
+            <button id="searchAddBtn">Buscar</button>
+          </div>
+          <div class="picker" id="picker" style="display:none"></div>
         </div>
-        <p class="search-hint">Escribe el producto y pulsa "Añadir" (o Enter). Puedes ir sumando todos los que quieras.</p>
+        <p class="search-hint">Escribe el producto y pulsa "Buscar". Elige el que quieras de la lista.</p>
         <p class="search-error" id="searchError" style="display:none;"></p>
         <p class="disclaimer">Precios en directo desde Mercadona (proxy propio, sin login).<br>Esto no compra nada por ti — copia la lista en la app de Mercadona para pedirlo.</p>
       </section>
@@ -221,44 +252,74 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 // basket: { term, name, price, id, thumbnail, qty }
 let basket = JSON.parse(localStorage.getItem('cv_basket') || '[]');
 
-const searchInput = document.getElementById('searchInput');
+const searchInput  = document.getElementById('searchInput');
 const searchAddBtn = document.getElementById('searchAddBtn');
-const searchError = document.getElementById('searchError');
+const searchError  = document.getElementById('searchError');
 const searchResultsEl = document.getElementById('searchResults');
+const picker       = document.getElementById('picker');
 
 function saveBasket() {
   localStorage.setItem('cv_basket', JSON.stringify(basket));
 }
 
-async function addTerm(term) {
-  if (!term.trim()) return;
+function closePicker() {
+  picker.style.display = 'none';
+  picker.innerHTML = '';
+}
+
+function pickItem(item, term) {
+  basket.push({ term, name: item.name, price: item.price, id: item.id, thumbnail: item.thumbnail || '', qty: 1 });
+  saveBasket();
+  renderBasket();
+  searchInput.value = '';
+  closePicker();
+  searchInput.focus();
+}
+
+async function searchTerm() {
+  const term = searchInput.value.trim();
+  if (!term) return;
   searchAddBtn.disabled = true;
   searchAddBtn.textContent = '…';
   searchError.style.display = 'none';
+  closePicker();
   try {
-    const whParam = '';
-    const res = await fetch('/api/search?q=' + encodeURIComponent(term) + whParam);
+    const res = await fetch('/api/search?q=' + encodeURIComponent(term));
     const data = await res.json();
-    if (data.error) {
+    if (data.error || !data.results?.length) {
       searchError.textContent = '❌ Sin resultados para "' + term + '"';
       searchError.style.display = 'block';
+    } else if (data.results.length === 1) {
+      pickItem(data.results[0], term);
     } else {
-      basket.push({ term, name: data.name, price: data.price, id: data.id, thumbnail: data.thumbnail || '', qty: 1 });
-      searchInput.value = '';
-      saveBasket();
-      renderBasket();
+      picker.innerHTML = data.results.map((r, i) => {
+        const perKg = r.pricePerKg ? ` · ${r.pricePerKg.toFixed(2)}€/${r.unit || 'kg'}` : '';
+        return `<div class="picker-item" data-idx="${i}">
+          <img class="picker-thumb" src="${r.thumbnail || ''}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
+          <div class="picker-info">
+            <div class="picker-name">${r.name}</div>
+            <div class="picker-meta">${perKg}</div>
+          </div>
+          <div class="picker-price">${r.price?.toFixed(2)}€</div>
+        </div>`;
+      }).join('') + '<div class="picker-hint">Elige el producto que quieras añadir</div>';
+      picker.style.display = 'block';
+      picker.querySelectorAll('.picker-item').forEach((el, i) => {
+        el.addEventListener('click', () => pickItem(data.results[i], term));
+      });
     }
   } catch {
     searchError.textContent = 'No se ha podido conectar con el servidor de precios.';
     searchError.style.display = 'block';
   }
   searchAddBtn.disabled = false;
-  searchAddBtn.textContent = 'Añadir';
-  searchInput.focus();
+  searchAddBtn.textContent = 'Buscar';
 }
 
-searchAddBtn.addEventListener('click', () => addTerm(searchInput.value));
-searchInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); addTerm(searchInput.value); } });
+searchAddBtn.addEventListener('click', searchTerm);
+searchInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); searchTerm(); } });
+searchInput.addEventListener('keydown', e => { if (e.key === 'Escape') closePicker(); });
+document.addEventListener('click', e => { if (!e.target.closest('.search-wrap')) closePicker(); });
 
 function changeQty(i, delta) {
   basket[i].qty = Math.max(1, (basket[i].qty || 1) + delta);
@@ -571,7 +632,7 @@ menuForm.addEventListener('submit', async (e) => {
     const res = await fetch('/api/batch', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ terms: ingredientes.map(ing => ing.term), {} }),
+      body: JSON.stringify({ terms: ingredientes.map(ing => ing.term) }),
     });
     const data = await res.json();
     items = (data.items || []).map((it, i) => ({ ...it, units: unidades[i] }));
