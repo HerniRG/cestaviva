@@ -113,9 +113,9 @@
   @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
   .actions { display: flex; gap: 10px; justify-content: center; margin-top: 22px; flex-wrap: wrap; }
-  .btn-copy, .btn-copy-txt, .btn-again { font-family: 'Inter', sans-serif; font-weight: 600; font-size: 13.5px; padding: 11px 18px; border-radius: 8px; cursor: pointer; border: 1px solid rgba(237,228,211,0.25); background: transparent; color: var(--paper-soft); }
+  .btn-copy, .btn-again { font-family: 'Inter', sans-serif; font-weight: 600; font-size: 13.5px; padding: 11px 18px; border-radius: 8px; cursor: pointer; border: 1px solid rgba(237,228,211,0.25); background: transparent; color: var(--paper-soft); }
   .btn-copy { border-color: var(--mustard); color: var(--mustard); }
-  .btn-copy.copied, .btn-copy-txt.copied { background: var(--mustard); color: #2B2013; border-color: var(--mustard); }
+  .btn-copy.copied { background: var(--mustard); color: #2B2013; border-color: var(--mustard); }
 
   .empty-state { text-align: center; padding: 60px 20px; color: rgba(237,228,211,0.4); font-size: 14px; }
   .loading { text-align: center; padding: 40px 20px; color: var(--mustard); font-family: 'IBM Plex Mono', monospace; font-size: 13px; }
@@ -440,24 +440,20 @@ function renderBasket() {
       </div>
     </div>
     <div class="actions">
-      <button class="btn-copy" id="copySearchBtn">Copiar para Mercadona</button>
-      <button class="btn-copy-txt" id="copyPricesBtn">Copiar con precios</button>
+      <button class="btn-copy" id="copySearchBtn">Copiar lista</button>
       <button class="btn-again" onclick="basket=[]; saveBasket(); renderBasket();">Vaciar</button>
     </div>`;
 
   document.getElementById('copySearchBtn').addEventListener('click', () => {
-    const text = basket.map(it => (it.qty > 1 ? `${it.name} ×${it.qty}` : it.name)).join('\n');
-    copyAndFlash(text, 'copySearchBtn', 'Copiar para Mercadona');
-  });
-  document.getElementById('copyPricesBtn').addEventListener('click', () => {
-    const lines = basket.map(it => {
-      const total = ((it.price || 0) * (it.qty || 1)).toFixed(2);
-      const q = it.qty > 1 ? ` ×${it.qty}` : '';
-      return `${it.name}${q}  ${total}€`;
+    const fecha = new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+    const lineas = basket.map(it => {
+      const q = (it.qty || 1) > 1 ? ` ×${it.qty}` : '';
+      const precio = ((it.price || 0) * (it.qty || 1)).toFixed(2).replace('.', ',');
+      return `• ${it.name}${q} — ${precio}€`;
     });
     const total = basket.reduce((s, it) => s + (it.price || 0) * (it.qty || 1), 0);
-    const text = lines.join('\n') + `\n${'─'.repeat(28)}\nTOTAL  ${total.toFixed(2)}€`;
-    copyAndFlash(text, 'copyPricesBtn', 'Copiar con precios');
+    const text = `🛒 Lista Mercadona · ${fecha}\n\n${lineas.join('\n')}\n\nTotal: ${total.toFixed(2).replace('.', ',')}€`;
+    copyAndFlash(text, 'copySearchBtn', 'Copiar lista');
   });
 }
 
@@ -742,26 +738,19 @@ menuForm.addEventListener('submit', async (e) => {
       </div>
     </div>
     <div class="actions">
-      <button class="btn-copy" id="copyMenuBtn">Copiar para Mercadona</button>
-      <button class="btn-copy-txt" id="copyMenuPricesBtn">Copiar con precios</button>
+      <button class="btn-copy" id="copyMenuBtn">Copiar lista</button>
       <button class="btn-again" onclick="window.scrollTo({top:0,behavior:'smooth'})">Ajustar de nuevo</button>
     </div>`;
 
   document.getElementById('copyMenuBtn').addEventListener('click', () => {
-    const text = items.filter(it => !it.error).map(it => {
+    const fecha = new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+    const lineas = items.filter(it => !it.error).map(it => {
       const q = it.units > 1 ? ` ×${it.units}` : '';
-      return `${it.name}${q}`;
-    }).join('\n');
-    copyAndFlash(text, 'copyMenuBtn', 'Copiar para Mercadona');
-  });
-
-  document.getElementById('copyMenuPricesBtn').addEventListener('click', () => {
-    const lines = items.filter(it => !it.error).map(it => {
-      const q = it.units > 1 ? ` ×${it.units}` : '';
-      return `${it.name}${q}  ${(it.price * it.units).toFixed(2)}€`;
+      const precio = (it.price * it.units).toFixed(2).replace('.', ',');
+      return `• ${it.name}${q} — ${precio}€`;
     });
-    const text = lines.join('\n') + `\n${'─'.repeat(30)}\nTOTAL  ${total.toFixed(2)}€`;
-    copyAndFlash(text, 'copyMenuPricesBtn', 'Copiar con precios');
+    const text = `🛒 Menú ${goalData.label} · ${personasLabel} · ${fecha}\n\n${lineas.join('\n')}\n\nTotal: ${total.toFixed(2).replace('.', ',')}€`;
+    copyAndFlash(text, 'copyMenuBtn', 'Copiar lista');
   });
 
   menuBtn.disabled = false;
