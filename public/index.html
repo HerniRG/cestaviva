@@ -187,6 +187,38 @@
   .picker-meta { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: rgba(237,228,211,0.45); margin-top: 2px; }
   .picker-price { font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 14px; color: var(--mustard); flex-shrink: 0; }
   .picker-hint { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: rgba(237,228,211,0.3); padding: 6px 14px 8px; text-align: center; }
+
+  /* Pulso Mercadona */
+  .pulso { display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 28px; }
+  @media (min-width: 640px) { .pulso { grid-template-columns: 1fr 1fr; } }
+  @media (min-width: 880px) { .pulso { grid-template-columns: 2fr 1fr 1fr; } }
+  .pulso-card { background: var(--bg-soft); border: 1px solid rgba(237,228,211,0.08); border-radius: 12px; padding: 16px 18px; }
+  .pulso-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(237,228,211,0.4); margin-bottom: 8px; }
+  .pulso-value { font-family: 'Space Grotesk', sans-serif; font-size: 22px; font-weight: 700; color: var(--paper-soft); }
+  .pulso-value.up { color: #e05a4e; }
+  .pulso-value.down { color: #5ab88a; }
+  .pulso-sub { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: rgba(237,228,211,0.4); margin-top: 4px; }
+  .pulso-loading { opacity: 0.3; font-family: 'IBM Plex Mono', monospace; font-size: 12px; }
+
+  /* Ranking */
+  .ranking-grid { display: grid; gap: 16px; }
+  @media (min-width: 700px) { .ranking-grid { grid-template-columns: 1fr 1fr; } }
+  .ranking-card { background: var(--bg-soft); border: 1px solid rgba(237,228,211,0.08); border-radius: 12px; padding: 18px; }
+  .ranking-title { font-family: 'Space Grotesk', sans-serif; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 14px; }
+  .ranking-title.up { color: #e05a4e; }
+  .ranking-title.down { color: #5ab88a; }
+  .ranking-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid rgba(237,228,211,0.06); }
+  .ranking-row:last-child { border-bottom: none; }
+  .ranking-pos { font-family: 'IBM Plex Mono', monospace; font-size: 11px; opacity: 0.3; width: 16px; flex-shrink: 0; }
+  .ranking-name { flex: 1; font-size: 12.5px; line-height: 1.3; }
+  .ranking-pct { font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600; flex-shrink: 0; }
+  .ranking-pct.up { color: #e05a4e; }
+  .ranking-pct.down { color: #5ab88a; }
+  .ranking-abs { font-family: 'IBM Plex Mono', monospace; font-size: 10px; opacity: 0.45; flex-shrink: 0; }
+  .ranking-nodata { font-family: 'IBM Plex Mono', monospace; font-size: 12px; opacity: 0.4; text-align: center; padding: 24px 0; line-height: 1.6; }
+  .ranking-dias { display: flex; gap: 6px; margin-bottom: 14px; }
+  .ranking-dias button { font-family: 'IBM Plex Mono', monospace; font-size: 11px; padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(237,228,211,0.15); background: transparent; color: rgba(237,228,211,0.5); cursor: pointer; }
+  .ranking-dias button.active { background: rgba(237,228,211,0.1); color: var(--paper-soft); border-color: rgba(237,228,211,0.3); }
 </style>
 </head>
 <body>
@@ -197,6 +229,25 @@
     <p>Busca cualquier producto y compáralo, o genera un menú semanal según tu objetivo — con la lista de la compra ya priceada, lista para copiar.</p>
   </header>
 
+
+  <!-- Pulso Mercadona — siempre visible -->
+  <div class="pulso" id="pulsoWrap">
+    <div class="pulso-card">
+      <div class="pulso-label">Índice inflación Mercadona</div>
+      <div class="pulso-value pulso-loading" id="pulsoInflacion">calculando…</div>
+      <div class="pulso-sub" id="pulsoInflacionSub">cesta de 30 productos básicos</div>
+    </div>
+    <div class="pulso-card">
+      <div class="pulso-label">Mayor subida (7d)</div>
+      <div class="pulso-value up pulso-loading" id="pulsoSubida">—</div>
+      <div class="pulso-sub" id="pulsoSubidaSub"></div>
+    </div>
+    <div class="pulso-card">
+      <div class="pulso-label">Mayor bajada (7d)</div>
+      <div class="pulso-value down pulso-loading" id="pulsoBajada">—</div>
+      <div class="pulso-sub" id="pulsoBajadaSub"></div>
+    </div>
+  </div>
 
   <div class="tabs">
     <button class="tab-btn active" data-tab="search">Búsqueda libre</button>
@@ -277,6 +328,28 @@
 
   <!-- TAB: histórico de precios -->
   <div class="tab-panel" id="tab-historico">
+    <!-- Ranking subidas / bajadas -->
+    <div class="ranking-grid" style="margin-bottom:28px" id="rankingWrap">
+      <div class="ranking-card">
+        <div class="ranking-title up">▲ Más subidos</div>
+        <div class="ranking-dias" id="diasBtnsUp">
+          <button class="active" data-dias="7">7 días</button>
+          <button data-dias="30">30 días</button>
+          <button data-dias="90">90 días</button>
+        </div>
+        <div id="rankingSubidas"><div class="ranking-nodata">Cargando…</div></div>
+      </div>
+      <div class="ranking-card">
+        <div class="ranking-title down">▼ Más bajados</div>
+        <div class="ranking-dias" id="diasBtnsDown">
+          <button class="active" data-dias="7">7 días</button>
+          <button data-dias="30">30 días</button>
+          <button data-dias="90">90 días</button>
+        </div>
+        <div id="rankingBajadas"><div class="ranking-nodata">Cargando…</div></div>
+      </div>
+    </div>
+
     <div class="grid">
       <section class="panel">
         <h2>Busca un producto</h2>
@@ -309,8 +382,107 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
     btn.classList.add('active');
-    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    const tab = btn.dataset.tab;
+    document.getElementById('tab-' + tab).classList.add('active');
+    if (tab === 'historico' && !rankingLoaded) loadRanking(7);
   });
+});
+
+/* ---------- Pulso Mercadona ---------- */
+function truncName(name, max = 28) { return name.length > max ? name.slice(0, max) + '…' : name; }
+
+async function loadPulso() {
+  // Inflación
+  try {
+    const res = await fetch('/api/inflacion');
+    const d = await res.json();
+    const el = document.getElementById('pulsoInflacion');
+    const sub = document.getElementById('pulsoInflacionSub');
+    if (d.vs30) {
+      const cls = d.vs30.pct > 0 ? 'up' : d.vs30.pct < 0 ? 'down' : '';
+      const arrow = d.vs30.pct > 0 ? '▲' : d.vs30.pct < 0 ? '▼' : '';
+      el.className = 'pulso-value ' + cls;
+      el.textContent = arrow + ' ' + Math.abs(d.vs30.pct) + '%';
+      sub.textContent = `vs hace 30 días · cesta de ${d.productos} productos`;
+    } else {
+      el.className = 'pulso-value';
+      el.textContent = d.totalActual.toFixed(2) + '€';
+      sub.textContent = `cesta de ${d.productos} productos básicos · sin histórico aún`;
+    }
+  } catch { document.getElementById('pulsoInflacion').textContent = '—'; }
+
+  // Top subida y bajada (7 días)
+  try {
+    const [resUp, resDown] = await Promise.all([
+      fetch('/api/ranking/subidas?dias=7&top=1'),
+      fetch('/api/ranking/bajadas?dias=7&top=1'),
+    ]);
+    const up = await resUp.json();
+    const down = await resDown.json();
+    const subEl = document.getElementById('pulsoSubida');
+    const subSub = document.getElementById('pulsoSubidaSub');
+    if (up.available && up.items[0]) {
+      subEl.className = 'pulso-value up'; subEl.textContent = '+' + up.items[0].pct + '%';
+      subSub.textContent = truncName(up.items[0].name);
+    } else { subEl.className = 'pulso-value'; subEl.textContent = '—'; subSub.textContent = 'sin datos todavía'; }
+
+    const downEl = document.getElementById('pulsoBajada');
+    const downSub = document.getElementById('pulsoBajadaSub');
+    if (down.available && down.items[0]) {
+      downEl.className = 'pulso-value down'; downEl.textContent = down.items[0].pct + '%';
+      downSub.textContent = truncName(down.items[0].name);
+    } else { downEl.className = 'pulso-value'; downEl.textContent = '—'; downSub.textContent = 'sin datos todavía'; }
+  } catch {}
+}
+loadPulso();
+
+/* ---------- Ranking ---------- */
+let rankingLoaded = false;
+let rankingDiasUp = 7, rankingDiasDown = 7;
+
+function renderRankingRows(items, type) {
+  if (!items.length) return `<div class="ranking-nodata">Sin datos todavía.<br>El cron job acumulará datos cada noche.</div>`;
+  return items.map((it, i) => `
+    <div class="ranking-row">
+      <span class="ranking-pos">${i + 1}</span>
+      <span class="ranking-name">${truncName(it.name, 32)}</span>
+      <span class="ranking-abs">${it.priceBase.toFixed(2)}→${it.priceNow.toFixed(2)}€</span>
+      <span class="ranking-pct ${type}">${type === 'up' ? '+' : ''}${it.pct}%</span>
+    </div>`).join('');
+}
+
+async function loadRanking(dias) {
+  rankingLoaded = true;
+  document.getElementById('rankingSubidas').innerHTML = '<div class="ranking-nodata">Cargando…</div>';
+  document.getElementById('rankingBajadas').innerHTML = '<div class="ranking-nodata">Cargando…</div>';
+  try {
+    const [resUp, resDown] = await Promise.all([
+      fetch(`/api/ranking/subidas?dias=${dias}&top=10`),
+      fetch(`/api/ranking/bajadas?dias=${dias}&top=10`),
+    ]);
+    const up = await resUp.json();
+    const down = await resDown.json();
+    document.getElementById('rankingSubidas').innerHTML = renderRankingRows(up.available ? up.items : [], 'up');
+    document.getElementById('rankingBajadas').innerHTML = renderRankingRows(down.available ? down.items : [], 'down');
+  } catch {
+    document.getElementById('rankingSubidas').innerHTML = '<div class="ranking-nodata">Error cargando datos.</div>';
+    document.getElementById('rankingBajadas').innerHTML = '<div class="ranking-nodata">Error cargando datos.</div>';
+  }
+}
+
+document.getElementById('diasBtnsUp').addEventListener('click', e => {
+  const btn = e.target.closest('button'); if (!btn) return;
+  document.querySelectorAll('#diasBtnsUp button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  rankingDiasUp = parseInt(btn.dataset.dias);
+  loadRanking(rankingDiasUp);
+});
+document.getElementById('diasBtnsDown').addEventListener('click', e => {
+  const btn = e.target.closest('button'); if (!btn) return;
+  document.querySelectorAll('#diasBtnsDown button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  rankingDiasDown = parseInt(btn.dataset.dias);
+  loadRanking(rankingDiasDown);
 });
 
 /* ---------- Búsqueda libre ---------- */

@@ -262,6 +262,122 @@ app.post('/api/history/basket', (req, res) => {
   });
 });
 
+// GET /api/ranking/subidas?dias=7&top=10  — productos que más han subido
+app.get('/api/ranking/subidas', (req, res) => {
+  const dias = Math.min(parseInt(req.query.dias) || 7, 90);
+  const top = Math.min(parseInt(req.query.top) || 10, 50);
+  const historico = loadHistorico();
+  const dates = Object.keys(historico.snapshots).sort();
+  if (dates.length < 2) return res.json({ available: false, items: [] });
+
+  const latest = dates[dates.length - 1];
+  const cutoff = new Date(Date.now() - dias * 86400000).toISOString().slice(0, 10);
+  const baseDate = dates.find(d => d <= cutoff) || dates[0];
+  const snapNow = historico.snapshots[latest];
+  const snapBase = historico.snapshots[baseDate];
+
+  const items = [];
+  for (const [id, priceNow] of Object.entries(snapNow)) {
+    const priceBase = snapBase[id];
+    if (priceBase === undefined || priceBase <= 0) continue;
+    const diff = priceNow - priceBase;
+    const pct = (diff / priceBase) * 100;
+    if (diff <= 0) continue;
+    const meta = historico.catalog[id];
+    if (!meta) continue;
+    items.push({ id, name: meta.name, priceNow, priceBase, diff: parseFloat(diff.toFixed(2)), pct: parseFloat(pct.toFixed(1)) });
+  }
+  items.sort((a, b) => b.pct - a.pct);
+  res.json({ available: true, dateFrom: baseDate, dateTo: latest, dias, items: items.slice(0, top) });
+});
+
+// GET /api/ranking/bajadas?dias=7&top=10  — productos que más han bajado
+app.get('/api/ranking/bajadas', (req, res) => {
+  const dias = Math.min(parseInt(req.query.dias) || 7, 90);
+  const top = Math.min(parseInt(req.query.top) || 10, 50);
+  const historico = loadHistorico();
+  const dates = Object.keys(historico.snapshots).sort();
+  if (dates.length < 2) return res.json({ available: false, items: [] });
+
+  const latest = dates[dates.length - 1];
+  const cutoff = new Date(Date.now() - dias * 86400000).toISOString().slice(0, 10);
+  const baseDate = dates.find(d => d <= cutoff) || dates[0];
+  const snapNow = historico.snapshots[latest];
+  const snapBase = historico.snapshots[baseDate];
+
+  const items = [];
+  for (const [id, priceNow] of Object.entries(snapNow)) {
+    const priceBase = snapBase[id];
+    if (priceBase === undefined || priceBase <= 0) continue;
+    const diff = priceNow - priceBase;
+    const pct = (diff / priceBase) * 100;
+    if (diff >= 0) continue;
+    const meta = historico.catalog[id];
+    if (!meta) continue;
+    items.push({ id, name: meta.name, priceNow, priceBase, diff: parseFloat(diff.toFixed(2)), pct: parseFloat(pct.toFixed(1)) });
+  }
+  items.sort((a, b) => a.pct - b.pct);
+  res.json({ available: true, dateFrom: baseDate, dateTo: latest, dias, items: items.slice(0, top) });
+});
+
+// Cesta de referencia para el índice de inflación (~30 productos básicos)
+const CESTA_REFERENCIA = [
+  'leche entera hacendado', 'pan molde', 'huevos camperos', 'aceite oliva virgen extra',
+  'arroz redondo hacendado', 'pasta espagueti', 'tomate frito hacendado', 'atún claro aceite',
+  'yogur natural hacendado', 'mantequilla hacendado', 'queso tierno', 'jamón cocido',
+  'pechuga pollo', 'carne picada mixta', 'merluza congelada',
+  'patatas', 'tomate', 'cebolla', 'zanahoria', 'manzana golden',
+  'plátano', 'naranja', 'lechuga', 'brócoli congelado',
+  'agua mineral hacendado', 'zumo naranja', 'cerveza hacendado',
+  'papel higiénico', 'detergente ropa', 'champú',
+];
+
+// GET /api/inflacion  — índice de inflación Mercadona (cesta fija de 30 productos)
+app.get('/api/inflacion', async (req, res) => {
+  const historico = loadHistorico();
+  const dates = Object.keys(historico.snapshots).sort();
+
+  // Buscar los IDs de la cesta si no los tenemos ya
+  const wh = req.query.wh || DEFAULT_WAREHOUSE;
+  const cestaIds = {};
+  try {
+    await Promise.all(CESTA_REFERENCIA.map(term =>
+      algoliaSearch(term, wh, 'es', 1).then(data => {
+        const h = data?.hits?.[0];
+        if (h) cestaIds[term] = { id: h.id, name: h.display_name, price: parseFloat(h.price_instructions?.unit_price) };
+      }).catch(() => {})
+    ));
+  } catch { return res.status(502).json({ error: 'Error consultando precios actuales' }); }
+
+  const totalActual = Object.values(cestaIds).reduce((s, p) => s + (p.price || 0), 0);
+
+  const calcVs = (daysAgo) => {
+    if (dates.length < 1) return null;
+    const cutoff = new Date(Date.now() - daysAgo * 86400000).toISOString().slice(0, 10);
+    const baseDate = dates.find(d => d <= cutoff);
+    if (!baseDate) return null;
+    const snap = historico.snapshots[baseDate];
+    let total = 0, matched = 0;
+    for (const { id, price } of Object.values(cestaIds)) {
+      const old = snap[id];
+      if (old !== undefined) { total += old; matched++; }
+    }
+    if (!matched) return null;
+    const diff = totalActual - total;
+    return { date: baseDate, total: parseFloat(total.toFixed(2)), diff: parseFloat(diff.toFixed(2)), pct: parseFloat((diff / total * 100).toFixed(1)), matched };
+  };
+
+  res.json({
+    fecha: new Date().toISOString().slice(0, 10),
+    productos: Object.values(cestaIds).length,
+    totalActual: parseFloat(totalActual.toFixed(2)),
+    vs30: calcVs(30),
+    vs90: calcVs(90),
+    vs365: calcVs(365),
+    cesta: Object.values(cestaIds).map(p => ({ name: p.name, price: p.price })),
+  });
+});
+
 app.get('/health', (_req, res) => res.json({ status: 'ok', warehouse: DEFAULT_WAREHOUSE }));
 
 app.listen(PORT, () => {
