@@ -51,48 +51,44 @@ este proxy (mucho más fiable que reimplementarla).
   → lista de productos + precio total
 - `GET /health` → comprobación rápida de que está vivo
 
-## Desplegar en Hostinger (Node.js App)
+## Instalación local
 
-1. En hPanel, ve a **Websites → [tu dominio] → Node.js** (o "Avanzado → Node.js").
-2. Crea una nueva app Node.js:
-   - Versión de Node: 18 o superior
-   - Application root: la carpeta donde subas estos archivos (ej. `mercadona-proxy`)
-   - Application startup file: `server.js`
-3. Sube estos archivos (`server.js`, `package.json`) por el gestor de
-   archivos de hPanel o por Git/FTP.
-4. **Importante:** el CLI `mercadona` tiene que estar instalado en el
-   servidor para que `execFile` lo encuentre. Desde la terminal SSH de
-   Hostinger (si tu plan la incluye):
-   ```
-   npm install -g @ivorpad/mercadona
-   ```
-   Si tu plan no tiene SSH, instala el paquete como dependencia local
-   añadiendo `"@ivorpad/mercadona": "latest"` a `package.json` y cambia
-   en `server.js` la llamada `execFile('mercadona', ...)` por
-   `execFile('npx', ['mercadona', ...])`.
-5. En el panel de la app Node.js, pulsa **NPM Install** (instala `express`
-   y `cors` de `package.json`).
-6. Arranca/reinicia la app. hPanel te dará una URL tipo
-   `https://tu-dominio.com` o un puerto interno con proxy — comprueba
-   cuál usa tu plan concretamente en la pantalla de la app.
-7. Prueba desde fuera:
-   ```
+```bash
+git clone https://github.com/HerniRG/cestaviva.git
+cd cestaviva
+npm install
+npm install -g @ivorpad/mercadona   # requisito: el CLI debe estar en el PATH
+npm start                            # arranca en http://localhost:3000
+```
+
+## Requisitos para desplegarlo (cualquier proveedor)
+
+Esto es una app Node.js estándar (Express) — funciona en cualquier
+hosting que soporte procesos Node de larga duración: Railway, Render,
+Fly.io, un VPS propio, Hostinger con Node.js habilitado, etc. Solo
+necesitas:
+
+1. **Node.js 18+** disponible en el servidor.
+2. **El CLI `mercadona` en el `PATH`** del proceso — instálalo con
+   `npm install -g @ivorpad/mercadona` en el servidor (necesita acceso
+   por terminal/SSH). Si tu proveedor no permite instalar paquetes
+   globales, añade `"@ivorpad/mercadona": "latest"` a las
+   dependencias de `package.json` y cambia en `server.js` la llamada
+   `execFile('mercadona', ...)` por `execFile('npx', ['mercadona', ...])`.
+3. **Comando de arranque:** `node server.js` (o `npm start`).
+4. **Variable de entorno opcional** `MERCADONA_WH` para fijar tu
+   almacén (por defecto `mad1`, Madrid). Averigua el tuyo con
+   `mercadona set-postal <tu_código_postal>`.
+5. Tras desplegar, comprueba que responde:
+   ```bash
    curl "https://tu-dominio.com/api/search?q=pollo"
    ```
 
-## Ajustar el almacén (warehouse)
-
-Por defecto usa `mad1` (Madrid). Si tu zona es otra, ponlo como variable
-de entorno en la configuración de la app Node de hPanel:
-
-```
-MERCADONA_WH=tu_codigo_de_almacen
-```
-
-(Puedes averiguar tu código con `mercadona set-postal <tu_cp>` desde
-cualquier terminal con el CLI instalado.)
-
-## Uso desde el artifact / la web
+⚠️ Nota sobre IPs: el propio `mercadona-cli` recomienda ejecutar la
+parte de búsqueda/lectura desde cualquier IP sin problema, pero evita
+datacenters muy señalados si vas a escalar tráfico — revisa el README
+de [mercadona-cli](https://github.com/ivorpad/mercadona-cli) para el
+detalle completo.
 
 ```js
 const res = await fetch('https://tu-dominio.com/api/search?q=pollo');
