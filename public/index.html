@@ -282,17 +282,51 @@ async function resolveCP() {
       locationErr.textContent = data.error;
       locationErr.style.display = 'block';
     } else {
+      const prevWh = currentWh;
       currentCp = data.postal_code;
       currentWh = data.warehouse;
       localStorage.setItem('cv_cp', currentCp);
       localStorage.setItem('cv_wh', currentWh);
       renderLocationBar();
+      // Si hay items en el basket y el almacén cambió, actualizamos precios
+      if (basket.length > 0 && prevWh !== currentWh) {
+        await repriceBasket();
+      }
     }
   } catch {
     locationErr.textContent = 'No se pudo conectar con el servidor.';
     locationErr.style.display = 'block';
   }
   cpBtn.disabled = false; cpBtn.textContent = 'Confirmar';
+}
+
+async function repriceBasket() {
+  const terms = basket.map(it => it.term);
+  // Indicador visual mientras recarga precios
+  const resultsEl = document.getElementById('searchResults');
+  const oldHtml = resultsEl.innerHTML;
+  const banner = document.createElement('div');
+  banner.style.cssText = 'font-family:IBM Plex Mono,monospace;font-size:12px;color:var(--mustard);text-align:center;padding:8px 0;';
+  banner.textContent = '↺ Actualizando precios para tu zona…';
+  resultsEl.prepend(banner);
+  try {
+    const res = await fetch('/api/batch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ terms, wh: currentWh }),
+    });
+    const data = await res.json();
+    (data.items || []).forEach((item, i) => {
+      if (!item.error && basket[i]) {
+        basket[i].price = item.price;
+        basket[i].name  = item.name;
+      }
+    });
+    saveBasket();
+    renderBasket();
+  } catch {
+    // silencioso — los precios quedan como estaban
+  }
 }
 
 cpBtn.addEventListener('click', resolveCP);
