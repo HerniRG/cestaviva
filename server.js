@@ -198,7 +198,10 @@ app.get('/api/cron/snapshot', async (req, res) => {
         thumbnail: h.thumbnail || null,
         pricePerKg: parseFloat(h.price_instructions?.bulk_price) || null,
         unit: h.price_instructions?.reference_format || null,
+        category: h.categories?.[0]?.name || null,
       };
+    } else if (!historico.catalog[id].category && h.categories?.[0]?.name) {
+      historico.catalog[id].category = h.categories[0].name;
     }
   }
   historico.snapshots[today] = snapshot;
@@ -324,6 +327,41 @@ app.get('/api/product/:id', async (req, res) => {
     console.error(err);
     res.status(502).json({ error: 'Error obteniendo ficha del producto', detail: err.message });
   }
+});
+
+// GET /api/stats?dias=7  — radiografía del catálogo: cuántos subieron/bajaron y variación media
+app.get('/api/stats', (req, res) => {
+  const dias = Math.min(parseInt(req.query.dias) || 7, 365);
+  const historico = loadHistorico();
+  const dates = Object.keys(historico.snapshots).sort();
+  if (dates.length < 2) return res.json({ available: false });
+
+  const latest = dates[dates.length - 1];
+  const cutoff = new Date(Date.now() - dias * 86400000).toISOString().slice(0, 10);
+  const baseDate = dates.find(d => d <= cutoff) || dates[0];
+  if (baseDate === latest) return res.json({ available: false });
+  const snapNow = historico.snapshots[latest];
+  const snapBase = historico.snapshots[baseDate];
+
+  let subieron = 0, bajaron = 0, sinCambio = 0, sumPct = 0, n = 0;
+  for (const [id, priceNow] of Object.entries(snapNow)) {
+    const priceBase = snapBase[id];
+    if (priceBase === undefined || priceBase <= 0) continue;
+    const diff = priceNow - priceBase;
+    n++;
+    sumPct += (diff / priceBase) * 100;
+    if (Math.abs(diff) < 0.005) sinCambio++;
+    else if (diff > 0) subieron++;
+    else bajaron++;
+  }
+  if (!n) return res.json({ available: false });
+
+  res.json({
+    available: true,
+    dateFrom: baseDate, dateTo: latest, dias,
+    productos: n, subieron, bajaron, sinCambio,
+    mediaPct: parseFloat((sumPct / n).toFixed(2)),
+  });
 });
 
 // GET /api/ranking/subidas?dias=7&top=10  — productos que más han subido
