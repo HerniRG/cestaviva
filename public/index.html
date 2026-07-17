@@ -72,6 +72,21 @@
   .receipt-line.error { color: var(--tomato); font-style: italic; }
   @keyframes lineIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
 
+  /* Histórico de precios */
+  .sparkline { display: block; margin-top: 3px; }
+  .price-change { font-size: 10px; font-family: 'IBM Plex Mono', monospace; }
+  .price-change.up { color: #e05a4e; }
+  .price-change.down { color: #5ab88a; }
+  .price-change.flat { opacity: 0.4; }
+
+  /* Panel inflación personal */
+  .inflation-banner { background: rgba(255,255,255,0.04); border: 1px solid rgba(237,228,211,0.1); border-radius: 10px; padding: 12px 16px; margin-bottom: 14px; display: flex; align-items: center; gap: 12px; font-size: 12.5px; }
+  .inflation-banner .inf-icon { font-size: 20px; flex-shrink: 0; }
+  .inflation-banner .inf-text { flex: 1; line-height: 1.4; }
+  .inflation-banner .inf-num { font-family: 'IBM Plex Mono', monospace; font-weight: 700; }
+  .inflation-banner .inf-num.up { color: #e05a4e; }
+  .inflation-banner .inf-num.down { color: #5ab88a; }
+
   /* Controles de cantidad en búsqueda */
   .qty-ctrl { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
   .qty-btn {
@@ -280,9 +295,91 @@ function pickItem(item, term) {
   basket.push({ term, name: item.name, price: item.price, pricePerKg: item.pricePerKg || null, unit: item.unit || null, id: item.id, thumbnail: item.thumbnail || '', qty: 1 });
   saveBasket();
   renderBasket();
+  fetchHistory(item.id);
   searchInput.value = '';
   closePicker();
   searchInput.focus();
+}
+
+// ---- Histórico de precios ----
+const historyCache = {};
+
+function makeSpark(history, w = 60, h = 22) {
+  if (history.length < 2) return '';
+  const prices = history.map(h => h.price);
+  const min = Math.min(...prices);
+  const max = Math.max(...prices);
+  const range = max - min || 0.01;
+  const pts = prices.map((p, i) => {
+    const x = (i / (prices.length - 1)) * w;
+    const y = h - ((p - min) / range) * (h - 2) - 1;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(' ');
+  const last = prices[prices.length - 1];
+  const first = prices[0];
+  const color = last > first ? '#e05a4e' : last < first ? '#5ab88a' : 'rgba(237,228,211,0.3)';
+  return `<svg class="sparkline" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
+    <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`;
+}
+
+function priceChangeTag(history) {
+  if (history.length < 2) return '';
+  const first = history[0].price;
+  const last = history[history.length - 1].price;
+  const diff = last - first;
+  const pct = ((diff / first) * 100).toFixed(1);
+  if (Math.abs(diff) < 0.005) return '<span class="price-change flat">sin cambios</span>';
+  const cls = diff > 0 ? 'up' : 'down';
+  const arrow = diff > 0 ? '▲' : '▼';
+  return `<span class="price-change ${cls}">${arrow} ${Math.abs(diff).toFixed(2)}€ (${Math.abs(pct)}%)</span>`;
+}
+
+async function fetchHistory(id) {
+  if (!id) return;
+  if (historyCache[id] !== undefined) { updateLineHistory(id, historyCache[id]); return; }
+  try {
+    const res = await fetch(`/api/history?id=${id}`);
+    const data = await res.json();
+    historyCache[id] = data.history || [];
+    updateLineHistory(id, historyCache[id]);
+  } catch { historyCache[id] = []; }
+}
+
+function updateLineHistory(id, history) {
+  const el = document.querySelector(`.receipt-line[data-id="${id}"]`);
+  if (!el || history.length < 2) return;
+  const nameEl = el.querySelector('.name');
+  if (!nameEl) return;
+  const existing = nameEl.querySelector('.spark-wrap');
+  if (existing) existing.remove();
+  const wrap = document.createElement('span');
+  wrap.className = 'spark-wrap';
+  wrap.style.display = 'flex'; wrap.style.alignItems = 'center'; wrap.style.gap = '6px';
+  wrap.innerHTML = makeSpark(history) + priceChangeTag(history);
+  nameEl.appendChild(wrap);
+}
+
+async function fetchBasketInflation() {
+  const ids = basket.filter(it => it.id).map(it => it.id);
+  if (!ids.length) return;
+  try {
+    const res = await fetch('/api/history/basket', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids }),
+    });
+    const data = await res.json();
+    if (!data.available || !data.vs30) return;
+    const banner = document.getElementById('inflationBanner');
+    if (!banner) return;
+    const d = data.vs30;
+    const cls = d.diff > 0 ? 'up' : 'down';
+    const arrow = d.diff > 0 ? '▲' : '▼';
+    const msg = d.diff > 0
+      ? `Tu cesta cuesta <span class="inf-num up">${arrow} ${Math.abs(d.diff).toFixed(2)}€ más (${Math.abs(d.pct)}%)</span> que hace 30 días`
+      : `Tu cesta cuesta <span class="inf-num down">${arrow} ${Math.abs(d.diff).toFixed(2)}€ menos (${Math.abs(d.pct)}%)</span> que hace 30 días`;
+    banner.innerHTML = `<span class="inf-icon">${d.diff > 0 ? '📈' : '📉'}</span><span class="inf-text">${msg}</span>`;
+    banner.style.display = 'flex';
+  } catch { /* sin datos históricos aún */ }
 }
 
 async function searchTerm() {
@@ -357,7 +454,7 @@ function renderBasket() {
       ? `<span class="per-kg">${it.pricePerKg.toFixed(2)}€/${it.unit || 'kg'}</span>`
       : '';
     return `
-    <div class="receipt-line" style="animation-delay:${i * 0.05}s">
+    <div class="receipt-line" data-id="${it.id || ''}" style="animation-delay:${i * 0.05}s">
       ${thumb}
       <span class="name">${it.name}${perKgTag}</span>
       <div class="qty-ctrl">
@@ -373,6 +470,7 @@ function renderBasket() {
   }).join('');
 
   searchResultsEl.innerHTML = `
+    <div class="inflation-banner" id="inflationBanner" style="display:none"></div>
     <div class="receipt-shell">
       <div class="receipt">
         <div class="receipt-title">Tu lista</div>
@@ -400,6 +498,10 @@ function renderBasket() {
     const text = `🛒 Lista Mercadona · ${fecha}\n\n${lineas.join('\n')}\n\nTotal: ${total.toFixed(2).replace('.', ',')}€`;
     copyAndFlash(text, 'copySearchBtn', 'Copiar lista');
   });
+
+  // Cargar histórico de todos los items del cesto y panel de inflación
+  basket.forEach(it => { if (it.id) fetchHistory(it.id); });
+  fetchBasketInflation();
 }
 
 function copyAndFlash(text, btnId, label) {

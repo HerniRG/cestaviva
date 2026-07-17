@@ -5,10 +5,58 @@ const express = require('express');
 const cors = require('cors');
 const https = require('https');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const DEFAULT_WAREHOUSE = process.env.MERCADONA_WH || 'mad1';
+const CRON_SECRET = process.env.CRON_SECRET || '';
+const HISTORICO_PATH = path.join(__dirname, 'data', 'historico.json');
+
+// Carga / guarda el JSON de histórico
+function loadHistorico() {
+  try { return JSON.parse(fs.readFileSync(HISTORICO_PATH, 'utf8')); }
+  catch { return { snapshots: {}, catalog: {} }; }
+}
+function saveHistorico(data) {
+  fs.mkdirSync(path.dirname(HISTORICO_PATH), { recursive: true });
+  fs.writeFileSync(HISTORICO_PATH, JSON.stringify(data));
+}
+
+// Itera TODOS los productos del índice Algolia usando /browse
+async function algoliaBrowseAll(warehouse, lang = 'es') {
+  const indexName = `${ALGOLIA_INDEX_BASE}_${warehouse}_${lang}`;
+  const hostname = `${ALGOLIA_APP_ID.toLowerCase()}-dsn.algolia.net`;
+  const allHits = [];
+
+  // Intenta /browse (cursor-based, devuelve todos los registros)
+  const tryBrowse = async (cursor) => {
+    const body = cursor ? { cursor } : { hitsPerPage: 1000 };
+    const { status, body: resp } = await httpsPost(
+      hostname,
+      `/1/indexes/${indexName}/browse`,
+      body,
+      { 'X-Algolia-Application-Id': ALGOLIA_APP_ID, 'X-Algolia-API-Key': ALGOLIA_API_KEY }
+    );
+    if (status !== 200) throw new Error(`browse ${status}`);
+    allHits.push(...(resp.hits || []));
+    if (resp.cursor) await tryBrowse(resp.cursor);
+  };
+
+  try {
+    await tryBrowse(null);
+    return allHits;
+  } catch {
+    // Fallback: búsquedas paginadas con query vacía (máx 1000 hits por Algolia)
+    const { body: resp } = await httpsPost(
+      hostname,
+      `/1/indexes/${indexName}/query`,
+      { query: '', hitsPerPage: 1000, page: 0 },
+      { 'X-Algolia-Application-Id': ALGOLIA_APP_ID, 'X-Algolia-API-Key': ALGOLIA_API_KEY }
+    );
+    return resp.hits || [];
+  }
+}
 
 // Credenciales públicas de solo lectura de Algolia (embebidas en la web de Mercadona)
 const ALGOLIA_APP_ID = '7UZJKL1DJ0';
@@ -118,6 +166,99 @@ app.post('/api/batch', async (req, res) => {
     console.error(err);
     res.status(502).json({ error: 'Error consultando Mercadona', detail: err.message });
   }
+});
+
+// GET /api/cron/snapshot?token=SECRET  — llamar desde cron job diario
+app.get('/api/cron/snapshot', async (req, res) => {
+  if (CRON_SECRET && req.query.token !== CRON_SECRET) {
+    return res.status(401).json({ error: 'No autorizado' });
+  }
+  const wh = resolveWarehouse(req);
+  const today = new Date().toISOString().slice(0, 10);
+  let hits;
+  try {
+    hits = await algoliaBrowseAll(wh);
+  } catch (err) {
+    return res.status(502).json({ error: 'Error obteniendo catálogo', detail: err.message });
+  }
+
+  const historico = loadHistorico();
+  const snapshot = {};
+  for (const h of hits) {
+    const id = h.id;
+    const price = parseFloat(h.price_instructions?.unit_price);
+    if (!id || isNaN(price)) continue;
+    snapshot[id] = price;
+    if (!historico.catalog[id]) {
+      historico.catalog[id] = {
+        name: h.display_name,
+        pricePerKg: parseFloat(h.price_instructions?.bulk_price) || null,
+        unit: h.price_instructions?.reference_format || null,
+      };
+    }
+  }
+  historico.snapshots[today] = snapshot;
+
+  // Mantener solo 365 días
+  const dates = Object.keys(historico.snapshots).sort();
+  if (dates.length > 365) {
+    dates.slice(0, dates.length - 365).forEach(d => delete historico.snapshots[d]);
+  }
+
+  saveHistorico(historico);
+  res.json({ date: today, products: Object.keys(snapshot).length, totalDays: Object.keys(historico.snapshots).length });
+});
+
+// GET /api/history?id=PRODUCT_ID  — historial de precio de un producto
+app.get('/api/history', (req, res) => {
+  const id = req.query.id;
+  if (!id) return res.status(400).json({ error: 'Falta id' });
+  const historico = loadHistorico();
+  const meta = historico.catalog[id] || null;
+  const history = [];
+  for (const [date, snap] of Object.entries(historico.snapshots).sort()) {
+    if (snap[id] !== undefined) history.push({ date, price: snap[id] });
+  }
+  if (!history.length) return res.json({ id, meta, history: [] });
+  const prices = history.map(h => h.price);
+  const min = Math.min(...prices);
+  const max = Math.max(...prices);
+  const first = prices[0];
+  const last = prices[prices.length - 1];
+  res.json({ id, meta, history, min, max, change: parseFloat((last - first).toFixed(2)), changePct: parseFloat(((last - first) / first * 100).toFixed(1)) });
+});
+
+// GET /api/history/basket  — inflación de una lista de IDs
+app.post('/api/history/basket', (req, res) => {
+  const ids = req.body?.ids;
+  if (!Array.isArray(ids) || !ids.length) return res.status(400).json({ error: 'Falta array ids' });
+  const historico = loadHistorico();
+  const dates = Object.keys(historico.snapshots).sort();
+  if (dates.length < 2) return res.json({ available: false });
+
+  const today = dates[dates.length - 1];
+  const ago30 = dates.find(d => d <= new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10)) || dates[0];
+  const ago90 = dates.find(d => d <= new Date(Date.now() - 90 * 86400000).toISOString().slice(0, 10)) || dates[0];
+
+  let total = 0, total30 = 0, total90 = 0, compared = 0;
+  for (const id of ids) {
+    const now = historico.snapshots[today]?.[id];
+    const p30 = historico.snapshots[ago30]?.[id];
+    const p90 = historico.snapshots[ago90]?.[id];
+    if (now !== undefined) {
+      total += now;
+      if (p30 !== undefined) { total30 += p30; compared++; }
+      if (p90 !== undefined) total90 += p90;
+    }
+  }
+  res.json({
+    available: true,
+    today,
+    total: parseFloat(total.toFixed(2)),
+    vs30: ago30 !== today ? { date: ago30, total: parseFloat(total30.toFixed(2)), diff: parseFloat((total - total30).toFixed(2)), pct: parseFloat(((total - total30) / total30 * 100).toFixed(1)) } : null,
+    vs90: ago90 !== today && ago90 !== ago30 ? { date: ago90, total: parseFloat(total90.toFixed(2)), diff: parseFloat((total - total90).toFixed(2)), pct: parseFloat(((total - total90) / total90 * 100).toFixed(1)) } : null,
+    compared,
+  });
 });
 
 app.get('/health', (_req, res) => res.json({ status: 'ok', warehouse: DEFAULT_WAREHOUSE }));
