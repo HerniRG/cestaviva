@@ -1,5 +1,5 @@
 // Proxy Express para la API pública (sin login) de Mercadona.
-// Llama directamente a Algolia (búsqueda) y a tienda.mercadona.es (almacén por CP).
+// Llama directamente a Algolia (búsqueda) y a OpenRouter (generación de menú con IA).
 // Sin dependencia de binarios externos — funciona en cualquier hosting Node.js.
 
 const express = require('express');
@@ -15,6 +15,9 @@ const DEFAULT_WAREHOUSE = process.env.MERCADONA_WH || 'mad1';
 const ALGOLIA_APP_ID = '7UZJKL1DJ0';
 const ALGOLIA_API_KEY = '9d8f2e39e90df472b4f2e559a116fe17';
 const ALGOLIA_INDEX_BASE = 'products_prod';
+
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || '';
+const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || 'nvidia/nemotron-3-super-120b-a12b:free';
 
 app.use(cors());
 app.use(express.json());
@@ -146,6 +149,76 @@ app.post('/api/batch', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(502).json({ error: 'Error consultando Mercadona', detail: err.message });
+  }
+});
+
+// POST /api/menu  body: { goal, skill, people, exercise, wh }
+app.post('/api/menu', async (req, res) => {
+  const { goal = 'equilibrado', skill = '0', people = 1, exercise = 'moderado' } = req.body || {};
+  const wh = resolveWarehouse(req);
+
+  const goalLabels = { equilibrado: 'equilibrado', proteina: 'alto en proteína', ligero: 'ligero y bajo en calorías', vegetariano: 'vegetariano', familiar: 'familiar y rápido de cocinar' };
+  const skillLabel = skill === '0' ? 'prefiere platos ya listos o muy sencillos (sin apenas cocinar)' : 'cocina sin problema y puede preparar recetas normales';
+  const exerciseLabel = { sedentario: 'sedentaria (oficina, poco movimiento)', moderado: 'moderadamente activa (camina, algo de deporte)', deportista: 'muy activa (entrena 4+ días a la semana, necesita más calorías y proteína)' }[exercise] || 'moderada';
+
+  const exerciseNote = exercise === 'deportista' ? ' Más proteína y carbohidratos.' : exercise === 'sedentario' ? ' Porciones más pequeñas.' : '';
+  const peopleNote = people > 1 ? ` Para ${people} personas (multiplica qty).` : '';
+
+  const prompt = `Nutricionista. Menú semanal ${goalLabels[goal] || goal}, actividad ${exercise}, ${skillLabel}.${exerciseNote}${peopleNote}
+
+JSON COMPACTO (sin texto antes ni después):
+{"days":[{"day":"Lun","meals":"<b>Des:</b> X · <b>Com:</b> X · <b>Cen:</b> X"},{"day":"Mar","meals":"..."},{"day":"Mié","meals":"..."},{"day":"Jue","meals":"..."},{"day":"Vie","meals":"..."},{"day":"Sáb","meals":"..."},{"day":"Dom","meals":"..."}],"ingredients":[{"term":"producto mercadona","qty":1}]}
+
+Reglas: 12 ingredientes máx, qty=unidades/semana, nombres cortos en español (ej: "huevos","pechuga pollo","arroz","brócoli congelado"), sin aceite/sal/pimienta.`;
+
+  let menuData;
+  try {
+    const orBody = {
+      model: OPENROUTER_MODEL,
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.7,
+      max_tokens: 4000,
+    };
+    const { status, body } = await httpsPost('openrouter.ai', '/api/v1/chat/completions', orBody, {
+      'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+      'HTTP-Referer': 'https://cestaviva.hernan-rodriguez.com',
+      'X-Title': 'CestaViva',
+    });
+    if (status !== 200) throw new Error(`OpenRouter ${status}: ${JSON.stringify(body)}`);
+    const content = body?.choices?.[0]?.message?.content || '';
+    // Busca el objeto JSON principal que empieza con {"days" o { "days" (ignora texto de razonamiento)
+    const jsonMatch = content.match(/(\{[\s\n]*"days"[\s\S]*\})\s*$/);
+    if (!jsonMatch) throw new Error('OpenRouter no devolvió JSON con "days"');
+    menuData = JSON.parse(jsonMatch[1]);
+    if (!menuData.days || !menuData.ingredients) throw new Error('JSON incompleto');
+  } catch (err) {
+    console.error('OpenRouter error:', err);
+    return res.status(502).json({ error: 'Error generando el menú con IA', detail: err.message });
+  }
+
+  const peopleN = parseInt(people, 10) || 1;
+  try {
+    const priceResults = await Promise.all(
+      menuData.ingredients.map(ing => {
+        const qty = Math.max(1, Math.ceil((ing.qty || 1) * peopleN));
+        return algoliaSearch(ing.term, wh, 'es', 1).then(data => {
+          const first = data?.hits?.[0];
+          if (!first) return { term: ing.term, qty, error: 'Sin resultados' };
+          return {
+            term: ing.term,
+            qty,
+            id: first.id,
+            name: first.display_name,
+            price: parseFloat(first.price_instructions?.unit_price),
+          };
+        }).catch(err => ({ term: ing.term, qty: Math.max(1, Math.ceil((ing.qty || 1) * peopleN)), error: err.message }));
+      })
+    );
+    const total = priceResults.reduce((sum, it) => sum + (it.price ? it.price * it.qty : 0), 0);
+    res.json({ days: menuData.days, items: priceResults, total: Math.round(total * 100) / 100, goal, people: peopleN });
+  } catch (err) {
+    console.error(err);
+    res.status(502).json({ error: 'Error consultando precios', detail: err.message });
   }
 });
 

@@ -210,6 +210,14 @@
             </div>
           </fieldset>
           <fieldset>
+            <legend>¿Actividad física?</legend>
+            <div class="options" data-group="exercise">
+              <button type="button" class="opt" data-value="sedentario">Sedentario</button>
+              <button type="button" class="opt active" data-value="moderado">Moderado</button>
+              <button type="button" class="opt" data-value="deportista">Deportista</button>
+            </div>
+          </fieldset>
+          <fieldset>
             <legend>¿Nivel en la cocina?</legend>
             <div class="options" data-group="skill">
               <button type="button" class="opt active" data-value="0">Prefiero platos ya listos</button>
@@ -584,7 +592,7 @@ const GOALS = {
   },
 };
 
-const menuState = { goal: 'equilibrado', skill: '0', people: '1' };
+const menuState = { goal: 'equilibrado', skill: '0', people: '1', exercise: 'moderado' };
 document.querySelectorAll('#menuForm .options').forEach(group => {
   group.addEventListener('click', (e) => {
     const btn = e.target.closest('.opt');
@@ -617,53 +625,55 @@ function showMenuSkeleton() {
 menuForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   menuBtn.disabled = true;
-  menuBtn.textContent = 'Consultando precios reales…';
+  menuBtn.textContent = '🤖 Generando menú con IA…';
   showMenuSkeleton();
   menuResultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-  const goalData = GOALS[menuState.goal];
-  const people = parseInt(menuState.people, 10);
-  const ingredientes = menuState.skill === '0' ? goalData.easy : goalData.std;
-  const unidades = ingredientes.map(ing => Math.max(1, Math.ceil(ing.qty * people)));
-
-  let items = [];
-  let total = 0;
+  let data;
   try {
-    const res = await fetch('/api/batch', {
+    const res = await fetch('/api/menu', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ terms: ingredientes.map(ing => ing.term) }),
+      body: JSON.stringify({
+        goal: menuState.goal,
+        skill: menuState.skill,
+        people: parseInt(menuState.people, 10),
+        exercise: menuState.exercise,
+      }),
     });
-    const data = await res.json();
-    items = (data.items || []).map((it, i) => ({ ...it, units: unidades[i] }));
-    total = items.reduce((sum, it) => sum + (it.price ? it.price * it.units : 0), 0);
-  } catch {
-    menuResultsEl.innerHTML = '<div class="empty-state">No se ha podido conectar con el servidor de precios.</div>';
+    data = await res.json();
+    if (!data.days || !data.items) throw new Error(data.error || 'Respuesta inesperada');
+  } catch (err) {
+    menuResultsEl.innerHTML = `<div class="empty-state">No se ha podido generar el menú: ${err.message}</div>`;
     menuBtn.disabled = false;
     menuBtn.textContent = 'Generar mi compra semanal';
     return;
   }
 
-  const daysHtml = goalData.days.map(d => `
+  const { days, items, total, people } = data;
+  const goalLabels = { equilibrado: 'Equilibrado', proteina: 'Alto en proteína', ligero: 'Ligero', vegetariano: 'Vegetariano', familiar: 'Familiar' };
+  const goalLabel = goalLabels[menuState.goal] || menuState.goal;
+  const personasLabel = `${people} persona${people > 1 ? 's' : ''}`;
+
+  const daysHtml = days.map(d => `
     <div class="day-card"><div class="day-name">${d.day}</div><div class="day-meals">${d.meals}</div></div>`).join('');
 
   const linesHtml = items.map((it, i) => {
     if (it.error) return `<div class="receipt-line error" style="animation-delay:${i * 0.06}s"><span class="name">${it.term} — sin resultado</span></div>`;
-    const qtyLabel = it.units > 1 ? ` ×${it.units}` : '';
-    const price = (it.price * it.units).toFixed(2);
+    const qtyLabel = it.qty > 1 ? ` ×${it.qty}` : '';
+    const price = (it.price * it.qty).toFixed(2);
     return `<div class="receipt-line" style="animation-delay:${i * 0.06}s">
       <span class="name">${it.name}${qtyLabel}</span>
       <div class="price-col"><span class="price">${price}€</span></div>
     </div>`;
   }).join('');
 
-  const personasLabel = `${people} persona${people > 1 ? 's' : ''}`;
   menuResultsEl.innerHTML = `
     <div class="meals-legend">Des = desayuno · Com = comida · Cen = cena</div>
     <div class="menu-days">${daysHtml}</div>
     <div class="receipt-shell">
       <div class="receipt">
-        <div class="receipt-title">Lista de la compra — ${goalData.label}</div>
+        <div class="receipt-title">Lista de la compra — ${goalLabel}</div>
         <div class="receipt-sub">${new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })} · ${personasLabel} · Mercadona</div>
         <hr>${linesHtml}<hr>
         <div class="receipt-total"><span>TOTAL</span><span>${total.toFixed(2)}€</span></div>
@@ -678,11 +688,11 @@ menuForm.addEventListener('submit', async (e) => {
   document.getElementById('copyMenuBtn').addEventListener('click', () => {
     const fecha = new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
     const lineas = items.filter(it => !it.error).map(it => {
-      const q = it.units > 1 ? ` ×${it.units}` : '';
-      const precio = (it.price * it.units).toFixed(2).replace('.', ',');
+      const q = it.qty > 1 ? ` ×${it.qty}` : '';
+      const precio = (it.price * it.qty).toFixed(2).replace('.', ',');
       return `• ${it.name}${q} — ${precio}€`;
     });
-    const text = `🛒 Menú ${goalData.label} · ${personasLabel} · ${fecha}\n\n${lineas.join('\n')}\n\nTotal: ${total.toFixed(2).replace('.', ',')}€`;
+    const text = `🛒 Menú ${goalLabel} · ${personasLabel} · ${fecha}\n\n${lineas.join('\n')}\n\nTotal: ${total.toFixed(2).replace('.', ',')}€`;
     copyAndFlash(text, 'copyMenuBtn', 'Copiar lista');
   });
 
