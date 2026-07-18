@@ -12,7 +12,16 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const DEFAULT_WAREHOUSE = process.env.MERCADONA_WH || 'mad1';
 const CRON_SECRET = process.env.CRON_SECRET || '';
-const HISTORICO_PATH = path.join(__dirname, 'data', 'historico.json');
+// DATA fuera del directorio de despliegue para que sobreviva a redeployments.
+// En Hostinger $HOME apunta a public_html (se borra con deploys estáticos), así que
+// extraemos el home real del usuario (/home/u927480008) desde __dirname con regex.
+// En local: HISTORICO_PATH=./data/historico.json en .env sobreescribe este valor.
+const _userHome = (() => {
+  const m = __dirname.match(/^(\/home\/[^/]+)/);
+  return m ? m[1] : (process.env.HOME || __dirname);
+})();
+const HISTORICO_PATH = process.env.HISTORICO_PATH ||
+  path.join(_userHome, '.cestaviva', 'historico.json');
 
 // Carga / guarda el JSON de histórico
 function loadHistorico() {
@@ -24,39 +33,39 @@ function saveHistorico(data) {
   fs.writeFileSync(HISTORICO_PATH, JSON.stringify(data));
 }
 
-// Itera TODOS los productos del índice Algolia usando /browse
-async function algoliaBrowseAll(warehouse, lang = 'es') {
-  const indexName = `${ALGOLIA_INDEX_BASE}_${warehouse}_${lang}`;
-  const hostname = `${ALGOLIA_APP_ID.toLowerCase()}-dsn.algolia.net`;
-  const allHits = [];
+// Obtiene TODOS los productos de Mercadona iterando sus categorías (sin límite de Algolia)
+async function getAllProductsFromMercadona(warehouse, lang = 'es') {
+  const { status, body } = await httpsGet(
+    'tienda.mercadona.es',
+    `/api/categories/?lang=${lang}&wh=${warehouse}`
+  );
+  if (status !== 200) throw new Error(`categories API ${status}`);
 
-  // Intenta /browse (cursor-based, devuelve todos los registros)
-  const tryBrowse = async (cursor) => {
-    const body = cursor ? { cursor } : { hitsPerPage: 1000 };
-    const { status, body: resp } = await httpsPost(
-      hostname,
-      `/1/indexes/${indexName}/browse`,
-      body,
-      { 'X-Algolia-Application-Id': ALGOLIA_APP_ID, 'X-Algolia-API-Key': ALGOLIA_API_KEY }
-    );
-    if (status !== 200) throw new Error(`browse ${status}`);
-    allHits.push(...(resp.hits || []));
-    if (resp.cursor) await tryBrowse(resp.cursor);
-  };
-
-  try {
-    await tryBrowse(null);
-    return allHits;
-  } catch {
-    // Fallback: búsquedas paginadas con query vacía (máx 1000 hits por Algolia)
-    const { body: resp } = await httpsPost(
-      hostname,
-      `/1/indexes/${indexName}/query`,
-      { query: '', hitsPerPage: 1000, page: 0 },
-      { 'X-Algolia-Application-Id': ALGOLIA_APP_ID, 'X-Algolia-API-Key': ALGOLIA_API_KEY }
-    );
-    return resp.hits || [];
+  const topCategories = body.results || [];
+  const subcatIds = [];
+  for (const cat of topCategories) {
+    for (const sub of (cat.categories || [])) {
+      subcatIds.push(sub.id);
+    }
   }
+
+  const allProducts = [];
+  const CONCURRENCY = 5;
+  for (let i = 0; i < subcatIds.length; i += CONCURRENCY) {
+    const batch = subcatIds.slice(i, i + CONCURRENCY);
+    const results = await Promise.all(batch.map(async (subcatId) => {
+      try {
+        const { status: s, body: b } = await httpsGet(
+          'tienda.mercadona.es',
+          `/api/categories/${subcatId}/?lang=${lang}&wh=${warehouse}`
+        );
+        if (s !== 200) return [];
+        return (b.categories || []).flatMap(inner => inner.products || []);
+      } catch { return []; }
+    }));
+    allProducts.push(...results.flat());
+  }
+  return allProducts;
 }
 
 // Credenciales públicas de solo lectura de Algolia (embebidas en la web de Mercadona)
@@ -67,6 +76,7 @@ const ALGOLIA_INDEX_BASE = 'products_prod';
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+app.get('/', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
 function resolveWarehouse(req) {
   const wh = req.query.wh || req.body?.wh;
@@ -95,6 +105,31 @@ function httpsPost(hostname, path, body, headers = {}) {
     });
     req.on('error', reject);
     req.write(payload);
+    req.end();
+  });
+}
+
+function httpsGet(hostname, urlPath, headers = {}) {
+  return new Promise((resolve, reject) => {
+    const req = https.request({
+      hostname,
+      path: urlPath,
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Accept-Language': 'es',
+        'User-Agent': 'Mozilla/5.0 (compatible; CestaViva/1.0)',
+        ...headers,
+      },
+    }, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        try { resolve({ status: res.statusCode, body: JSON.parse(data) }); }
+        catch { resolve({ status: res.statusCode, body: data }); }
+      });
+    });
+    req.on('error', reject);
     req.end();
   });
 }
@@ -180,7 +215,7 @@ app.get('/api/cron/snapshot', async (req, res) => {
   const today = new Date().toISOString().slice(0, 10);
   let hits;
   try {
-    hits = await algoliaBrowseAll(wh);
+    hits = await getAllProductsFromMercadona(wh);
   } catch (err) {
     return res.status(502).json({ error: 'Error obteniendo catálogo', detail: err.message });
   }
@@ -481,6 +516,23 @@ app.get('/api/inflacion', async (req, res) => {
 });
 
 app.get('/health', (_req, res) => res.json({ status: 'ok', warehouse: DEFAULT_WAREHOUSE }));
+
+app.get('/debug-paths', (_req, res) => {
+  const pub1 = path.join(__dirname, 'public');
+  const pub2 = path.join(process.cwd(), 'public');
+  const historico = fs.existsSync(HISTORICO_PATH) ? JSON.parse(fs.readFileSync(HISTORICO_PATH, 'utf8')) : null;
+  res.json({
+    __dirname,
+    cwd: process.cwd(),
+    HOME: process.env.HOME,
+    HISTORICO_PATH,
+    historico_exists: fs.existsSync(HISTORICO_PATH),
+    historico_days: historico ? Object.keys(historico.snapshots || {}).length : 0,
+    pub1exists: fs.existsSync(pub1),
+    pub2exists: fs.existsSync(pub2),
+    dir__dirname: fs.existsSync(__dirname) ? fs.readdirSync(__dirname) : null,
+  });
+});
 
 app.listen(PORT, () => {
   console.log(`Mercadona proxy escuchando en el puerto ${PORT} (almacén por defecto: ${DEFAULT_WAREHOUSE})`);

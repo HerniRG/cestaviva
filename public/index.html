@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>CestaViva — la bolsa de la compra, cotizando en directo</title>
 <meta name="description" content="Observatorio independiente de precios de Mercadona: precios en directo, histórico diario, índice de inflación propio y ranking de subidas y bajadas. Sin login.">
-<meta name="theme-color" content="#1F2E23">
+<meta name="theme-color" content="#07100a">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="CestaViva">
 <meta property="og:title" content="CestaViva — la bolsa de la compra, cotizando en directo">
@@ -21,278 +21,463 @@
 <link rel="preconnect" href="https://prod-mercadona.imgix.net">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
+  /* ─── VARIABLES ──────────────────────────────────────────────────── */
   :root {
-    --bg: #1F2E23; --bg-soft: #2A3D30;
-    --paper: #EDE4D3; --paper-soft: #F5EFE2;
-    --mustard: #E8A33D; --tomato: #C1443A;
-    --ink: #2B2620; --ink-soft: #6B6355; --line: rgba(43,38,32,0.15);
+    --bg:       #07100a;
+    --surface:  #0d1810;
+    --card:     rgba(255,255,255,0.038);
+    --card-h:   rgba(255,255,255,0.062);
+    --border:   rgba(255,255,255,0.072);
+    --border-h: rgba(232,163,61,0.35);
+    --amber:    #E8A33D;
+    --amber-d:  rgba(232,163,61,0.12);
+    --red:      #ff5449;
+    --red-d:    rgba(255,84,73,0.12);
+    --green:    #22c55e;
+    --green-d:  rgba(34,197,94,0.12);
+    --text:     rgba(255,255,255,0.88);
+    --muted:    rgba(255,255,255,0.42);
+    --dimmed:   rgba(255,255,255,0.2);
+    --ink:      #0a0f0b;
+    --paper:    #EDE4D3;
+    --ink-soft: #6B6355;
+    --line:     rgba(43,38,32,0.15);
   }
+
+  /* ─── RESET & BASE ───────────────────────────────────────────────── */
   * { box-sizing: border-box; }
   body {
-    margin: 0; background: var(--bg);
-    background-image: radial-gradient(circle at 15% 20%, rgba(232,163,61,0.06), transparent 40%),
-      radial-gradient(circle at 85% 80%, rgba(193,68,58,0.06), transparent 40%);
-    color: var(--paper); font-family: 'Inter', sans-serif; min-height: 100vh;
+    margin: 0;
+    background-color: var(--bg);
+    background-image:
+      linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px),
+      radial-gradient(ellipse 80% 50% at 50% -5%, rgba(232,163,61,0.07), transparent),
+      radial-gradient(ellipse 60% 40% at 100% 100%, rgba(34,197,94,0.04), transparent);
+    background-size: 48px 48px, 48px 48px, 100% 100%, 100% 100%;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
     -webkit-font-smoothing: antialiased;
   }
-  .wrap { max-width: 1040px; margin: 0 auto; padding: 48px 24px 96px; }
-  header { margin-bottom: 28px; }
-  .eyebrow { font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--mustard); margin: 0 0 10px; }
-  h1 { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: clamp(30px, 4.6vw, 48px); line-height: 1.05; margin: 0 0 14px; color: var(--paper-soft); text-wrap: balance; }
-  h1 em { font-style: normal; color: var(--mustard); }
-  header p { color: rgba(237,228,211,0.7); font-size: 16px; max-width: 620px; line-height: 1.55; margin: 0; }
+  body::before {
+    content: '';
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background:
+      radial-gradient(ellipse 130% 60% at 50% 0%, transparent 40%, rgba(4,8,5,0.7) 100%),
+      radial-gradient(ellipse 100% 100% at 50% 50%, transparent 60%, rgba(4,8,5,0.35) 100%);
+  }
 
-  /* Ticker — la cinta de cotización de la cesta */
-  .ticker { border-top: 1px dashed rgba(237,228,211,0.18); border-bottom: 1px dashed rgba(237,228,211,0.18); margin-bottom: 28px; overflow: hidden; }
+  .wrap { max-width: 1060px; margin: 0 auto; padding: 56px 24px 100px; position: relative; z-index: 1; }
+
+  /* ─── HEADER / HERO ──────────────────────────────────────────────── */
+  header { margin-bottom: 48px; position: relative; }
+  header > * { position: relative; z-index: 1; }
+
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--amber); margin: 0 0 20px;
+    padding: 5px 14px;
+    border: 1px solid rgba(232,163,61,0.2);
+    border-radius: 100px;
+    background: rgba(232,163,61,0.06);
+    white-space: nowrap;
+  }
+  .eyebrow::before {
+    content: '';
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--amber);
+    box-shadow: 0 0 8px var(--amber);
+    animation: blink 2.4s ease-in-out infinite;
+  }
+  @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0.25; } }
+
+  h1 {
+    font-family: 'Space Grotesk', sans-serif; font-weight: 700;
+    font-size: clamp(36px, 5.5vw, 64px);
+    line-height: 1.0; margin: 0 0 20px;
+    color: var(--text); letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+  h1 em {
+    font-style: normal; color: var(--amber);
+    text-shadow: 0 0 40px rgba(232,163,61,0.45);
+    animation: emGlow 4s ease-in-out 2.4s infinite;
+  }
+  @keyframes emGlow { 50% { text-shadow: 0 0 70px rgba(232,163,61,0.7); } }
+
+  header p {
+    color: var(--muted); font-size: 16px; max-width: 560px;
+    line-height: 1.65; margin: 0;
+  }
+
+  /* hero chart */
+  .hero-chart { position: absolute; right: -40px; top: -10px; width: min(42vw, 520px); height: auto; pointer-events: none; z-index: 0; display: none; opacity: 0.7; }
+  @media (min-width: 980px) { .hero-chart { display: block; } }
+  .hero-line { fill: none; stroke: var(--amber); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+    stroke-dasharray: 900; stroke-dashoffset: 900; animation: drawLine 2s 0.5s cubic-bezier(0.4,0,0.2,1) forwards; }
+  .hero-area { opacity: 0; animation: fadeArea 1.2s 1.8s ease forwards; }
+  .hero-dot { fill: var(--amber); opacity: 0; animation: fadeIn 0.3s 2.3s ease forwards; }
+  .hero-ping { fill: none; stroke: var(--amber); stroke-width: 1.5; opacity: 0;
+    transform-box: fill-box; transform-origin: center; animation: ping 2.6s 2.6s ease-out infinite; }
+  @keyframes drawLine { to { stroke-dashoffset: 0; } }
+  @keyframes fadeArea { to { opacity: 0.9; } }
+  @keyframes fadeIn { to { opacity: 1; } }
+  @keyframes ping { 0% { transform: scale(1); opacity: 0.7; } 70%,100% { transform: scale(3.5); opacity: 0; } }
+
+  /* ─── ENTRADA ────────────────────────────────────────────────────── */
+  @keyframes riseIn { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:none; } }
+  .eyebrow { opacity:0; animation: riseIn 0.55s ease-out forwards; }
+  h1 { opacity:0; animation: riseIn 0.6s 0.08s ease-out forwards; }
+  header p { opacity:0; animation: riseIn 0.6s 0.16s ease-out forwards; }
+  .pulso-card { opacity:0; animation: riseIn 0.5s ease-out forwards; }
+  .pulso-card:nth-child(1) { animation-delay:0.38s; }
+  .pulso-card:nth-child(2) { animation-delay:0.46s; }
+  .pulso-card:nth-child(3) { animation-delay:0.54s; }
+  .tabs { opacity:0; animation: riseIn 0.5s 0.62s ease-out forwards; }
+
+  /* ─── TICKER ─────────────────────────────────────────────────────── */
+  .ticker {
+    margin-bottom: 36px; overflow: hidden;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    backdrop-filter: blur(8px);
+  }
   .ticker[hidden] { display: none; }
-  .ticker-track { display: inline-flex; white-space: nowrap; padding: 9px 0; animation: tickerScroll 45s linear infinite; will-change: transform; }
+  .ticker-track { display: inline-flex; white-space: nowrap; padding: 10px 0; animation: tickerScroll 50s linear infinite; will-change: transform; }
   .ticker:hover .ticker-track { animation-play-state: paused; }
-  .ticker-item { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: rgba(237,228,211,0.75); display: inline-flex; align-items: baseline; gap: 7px; padding: 0 22px; cursor: pointer; font-variant-numeric: tabular-nums; }
-  .ticker-item:hover { color: var(--paper-soft); }
+  .ticker-item { font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: var(--muted); display: inline-flex; align-items: baseline; gap: 7px; padding: 0 24px; cursor: pointer; font-variant-numeric: tabular-nums; transition: color 0.15s; }
+  .ticker-item:hover { color: var(--text); }
   .ticker-pct { font-weight: 600; }
-  .ticker-pct.up { color: #e05a4e; }
-  .ticker-pct.down { color: #5ab88a; }
-  .ticker-sep { color: rgba(232,163,61,0.4); font-size: 8px; align-self: center; }
+  .ticker-pct.up { color: var(--red); }
+  .ticker-pct.down { color: var(--green); }
+  .ticker-sep { color: rgba(232,163,61,0.3); font-size: 8px; align-self: center; }
   @keyframes tickerScroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
-  .tabs { display: flex; gap: 6px; margin-bottom: 28px; background: var(--bg-soft); padding: 5px; border-radius: 12px; width: fit-content; }
-  .tab-btn { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 14px; padding: 10px 18px; border-radius: 9px; border: none; background: transparent; color: rgba(237,228,211,0.6); cursor: pointer; }
-  .tab-btn.active { background: var(--mustard); color: #2B2013; }
+  /* ─── TABS ───────────────────────────────────────────────────────── */
+  .tabs { display: flex; gap: 4px; margin-bottom: 32px; background: var(--card); padding: 4px; border-radius: 12px; width: fit-content; border: 1px solid var(--border); }
+  .tab-btn { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 13.5px; padding: 9px 20px; border-radius: 9px; border: none; background: transparent; color: var(--muted); cursor: pointer; transition: all 0.18s ease; letter-spacing: 0.01em; }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { background: var(--amber); color: #1a0f00; box-shadow: 0 2px 12px rgba(232,163,61,0.35); }
   .tab-panel { display: none; }
   .tab-panel.active { display: block; }
 
-  .grid { display: grid; grid-template-columns: 1fr; gap: 28px; }
+  /* ─── GRID ───────────────────────────────────────────────────────── */
+  .grid { display: grid; grid-template-columns: 1fr; gap: 24px; }
   @media (min-width: 880px) { .grid { grid-template-columns: 380px 1fr; align-items: start; } }
 
-  .panel { background: var(--bg-soft); border: 1px solid rgba(237,228,211,0.08); border-radius: 14px; padding: 28px; }
-  .panel h2 { font-family: 'Space Grotesk', sans-serif; font-size: 15px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--mustard); margin: 0 0 20px; }
+  /* ─── GLASS CARD ─────────────────────────────────────────────────── */
+  .panel {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 16px; padding: 28px;
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .panel:hover { border-color: rgba(255,255,255,0.1); }
+  .panel h2 { font-family: 'Space Grotesk', sans-serif; font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--amber); margin: 0 0 20px; opacity: 0.9; }
 
-  .disclaimer { font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; line-height: 1.6; color: rgba(237,228,211,0.45); margin-top: 18px; }
+  .disclaimer { font-family: 'IBM Plex Mono', monospace; font-size: 11px; line-height: 1.7; color: var(--dimmed); margin-top: 20px; }
 
-  /* Búsqueda libre */
+  /* ─── BÚSQUEDA ───────────────────────────────────────────────────── */
   .search-row { display: flex; gap: 8px; margin-bottom: 16px; }
-  .search-row input { flex: 1; font-family: 'Inter', sans-serif; font-size: 15px; padding: 12px 14px; border-radius: 8px; border: 1px solid rgba(237,228,211,0.2); background: var(--bg); color: var(--paper-soft); }
-  .search-row input:focus { outline: none; border-color: var(--mustard); }
-  .search-row button { font-family: 'Space Grotesk', sans-serif; font-weight: 700; padding: 12px 18px; border-radius: 8px; border: none; background: var(--mustard); color: #2B2013; cursor: pointer; white-space: nowrap; }
-  .search-row button:disabled { opacity: 0.5; }
-  .search-hint { font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: rgba(237,228,211,0.4); margin: -8px 0 20px; }
-  .search-error { font-size: 13px; color: var(--tomato); margin: 0 0 16px; padding: 10px 14px; background: rgba(193,68,58,0.12); border-radius: 8px; border: 1px solid rgba(193,68,58,0.3); }
+  .search-row input {
+    flex: 1; font-family: 'Inter', sans-serif; font-size: 14.5px; padding: 12px 16px;
+    border-radius: 10px; border: 1px solid var(--border);
+    background: rgba(255,255,255,0.04); color: var(--text);
+    transition: border-color 0.18s, box-shadow 0.18s;
+  }
+  .search-row input::placeholder { color: var(--dimmed); }
+  .search-row input:focus { outline: none; border-color: rgba(232,163,61,0.5); box-shadow: 0 0 0 3px rgba(232,163,61,0.1); }
+  .search-row button {
+    font-family: 'Space Grotesk', sans-serif; font-weight: 700; padding: 12px 20px;
+    border-radius: 10px; border: none; background: var(--amber); color: #1a0f00;
+    cursor: pointer; white-space: nowrap; font-size: 13.5px; letter-spacing: 0.01em;
+    transition: opacity 0.15s, transform 0.15s;
+  }
+  .search-row button:hover { opacity: 0.88; transform: translateY(-1px); }
+  .search-row button:active { transform: none; }
+  .search-row button:disabled { opacity: 0.4; transform: none; cursor: default; }
+  .search-hint { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--dimmed); margin: -8px 0 20px; }
+  .search-error { font-size: 13px; color: var(--red); margin: 0 0 16px; padding: 10px 14px; background: var(--red-d); border-radius: 8px; border: 1px solid rgba(255,84,73,0.25); }
 
-  /* Recibo con thumbnail */
-  .receipt-line { display: flex; align-items: center; gap: 10px; padding: 5px 0; opacity: 0; animation: lineIn 0.35s ease forwards; }
-  .receipt-line .thumb { width: 32px; height: 32px; border-radius: 4px; object-fit: cover; flex-shrink: 0; background: var(--line); cursor: pointer; transition: opacity 0.15s; }
-  .receipt-line .thumb:hover { opacity: 0.75; }
+  /* ─── RECIBO ─────────────────────────────────────────────────────── */
+  .receipt-line { display: flex; align-items: center; gap: 10px; padding: 6px 0; opacity: 0; animation: lineIn 0.35s ease forwards; border-bottom: 1px solid rgba(255,255,255,0.04); }
+  .receipt-line:last-of-type { border-bottom: none; }
+  .receipt-line .thumb { width: 34px; height: 34px; border-radius: 6px; object-fit: cover; flex-shrink: 0; background: var(--border); cursor: pointer; transition: opacity 0.15s, transform 0.15s; }
+  .receipt-line .thumb:hover { opacity: 0.8; transform: scale(1.05); }
   .receipt-line .name { flex: 1; font-size: 12.5px; display: flex; flex-direction: column; gap: 1px; }
-  .per-kg { font-size: 10px; opacity: 0.5; font-family: 'IBM Plex Mono', monospace; }
+  .per-kg { font-size: 10px; color: var(--dimmed); font-family: 'IBM Plex Mono', monospace; }
   .receipt-line .price-col { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
-  .receipt-line .price { font-weight: 600; white-space: nowrap; min-width: 52px; text-align: right; }
-  .receipt-line .rm { cursor: pointer; color: var(--tomato); font-weight: 700; font-size: 14px; padding: 0 2px; line-height: 1; }
-  .receipt-line.error { color: var(--tomato); font-style: italic; }
-  @keyframes lineIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+  .receipt-line .price { font-family: 'IBM Plex Mono', monospace; font-weight: 600; white-space: nowrap; min-width: 52px; text-align: right; }
+  .receipt-line .rm { cursor: pointer; color: var(--red); font-weight: 700; font-size: 15px; padding: 0 2px; line-height: 1; opacity: 0.7; transition: opacity 0.15s; }
+  .receipt-line .rm:hover { opacity: 1; }
+  .receipt-line.error { color: var(--red); font-style: italic; }
+  @keyframes lineIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:none; } }
 
-  /* Histórico de precios — sparkline en cesto */
+  /* sparklines */
   .sparkline { display: block; margin-top: 3px; }
   .price-change { font-size: 10px; font-family: 'IBM Plex Mono', monospace; }
-  .price-change.up { color: #e05a4e; }
-  .price-change.down { color: #5ab88a; }
-  .price-change.flat { opacity: 0.4; }
+  .price-change.up { color: var(--red); }
+  .price-change.down { color: var(--green); }
+  .price-change.flat { opacity: 0.35; }
 
-  /* Histórico — tab completo */
-  .hist-product-name { font-family: 'Space Grotesk', sans-serif; font-size: 15px; font-weight: 700; margin-bottom: 12px; color: var(--paper-soft); }
+  /* ─── HISTÓRICO ──────────────────────────────────────────────────── */
+  .hist-product-name { font-family: 'Space Grotesk', sans-serif; font-size: 16px; font-weight: 700; margin-bottom: 14px; color: var(--text); }
   .hist-stats { display: flex; flex-wrap: wrap; gap: 10px; }
-  .hist-stat { background: rgba(237,228,211,0.06); border-radius: 8px; padding: 10px 14px; flex: 1; min-width: 80px; }
-  .hist-stat .label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; opacity: 0.5; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+  .hist-stat { background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; flex: 1; min-width: 80px; }
+  .hist-stat .label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--dimmed); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 5px; }
   .hist-stat .val { font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 15px; }
-  .hist-stat .val.up { color: #e05a4e; }
-  .hist-stat .val.down { color: #5ab88a; }
+  .hist-stat .val.up { color: var(--red); }
+  .hist-stat .val.down { color: var(--green); }
 
-  .hist-chart-wrap { background: var(--bg-soft); border: 1px solid rgba(237,228,211,0.08); border-radius: 14px; padding: 24px; }
-  .hist-chart-title { font-family: 'Space Grotesk', sans-serif; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--mustard); margin-bottom: 16px; }
+  .hist-chart-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; }
+  .hist-chart-title { font-family: 'Space Grotesk', sans-serif; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--amber); margin-bottom: 18px; opacity: 0.9; }
   .hist-chart-svg { width: 100%; overflow: visible; }
-  .hist-no-data { font-family: 'IBM Plex Mono', monospace; font-size: 13px; opacity: 0.5; text-align: center; padding: 40px 0; }
-  .hist-axis-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; fill: rgba(237,228,211,0.35); }
-  .hist-tooltip { position: absolute; background: var(--ink); color: var(--paper-soft); font-family: 'IBM Plex Mono', monospace; font-size: 11px; padding: 6px 10px; border-radius: 6px; pointer-events: none; white-space: nowrap; opacity: 0; transition: opacity 0.1s; z-index: 10; }
+  .hist-no-data { font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: var(--dimmed); text-align: center; padding: 44px 0; }
+  .hist-axis-label { font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; fill: rgba(255,255,255,0.25); }
+  .hist-tooltip { position: absolute; background: #0a1a0c; border: 1px solid var(--border); color: var(--text); font-family: 'IBM Plex Mono', monospace; font-size: 11px; padding: 7px 11px; border-radius: 8px; pointer-events: none; white-space: nowrap; opacity: 0; transition: opacity 0.1s; z-index: 10; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
 
-  /* Panel inflación personal */
-  .inflation-banner { background: rgba(255,255,255,0.04); border: 1px solid rgba(237,228,211,0.1); border-radius: 10px; padding: 12px 16px; margin-bottom: 14px; display: flex; align-items: center; gap: 12px; font-size: 12.5px; }
+  /* ─── INFLACIÓN PERSONAL ─────────────────────────────────────────── */
+  .inflation-banner { background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 12px; padding: 13px 16px; margin-bottom: 16px; display: flex; align-items: center; gap: 12px; font-size: 12.5px; }
   .inflation-banner .inf-icon { font-size: 20px; flex-shrink: 0; }
-  .inflation-banner .inf-text { flex: 1; line-height: 1.4; }
+  .inflation-banner .inf-text { flex: 1; line-height: 1.45; color: var(--muted); }
   .inflation-banner .inf-num { font-family: 'IBM Plex Mono', monospace; font-weight: 700; }
-  .inflation-banner .inf-num.up { color: #e05a4e; }
-  .inflation-banner .inf-num.down { color: #5ab88a; }
+  .inflation-banner .inf-num.up { color: var(--red); }
+  .inflation-banner .inf-num.down { color: var(--green); }
 
-  /* Controles de cantidad en búsqueda */
+  /* ─── QTY CONTROL ────────────────────────────────────────────────── */
   .qty-ctrl { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
   .qty-btn {
     font-family: 'Inter', sans-serif; font-weight: 700; font-size: 15px;
-    width: 22px; height: 22px; border-radius: 4px;
-    border: 1px solid var(--line); background: var(--paper-soft); color: var(--ink);
+    width: 24px; height: 24px; border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.08); color: var(--text);
     cursor: pointer; padding: 0; margin: 0;
     display: flex; align-items: center; justify-content: center;
-    line-height: 1; user-select: none;
+    line-height: 1; user-select: none; transition: background 0.15s;
   }
-  .qty-num { font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 13px; min-width: 16px; text-align: center; color: var(--ink); line-height: 22px; }
+  .qty-btn:hover { background: rgba(255,255,255,0.14); }
+  .qty-num { font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 13px; min-width: 18px; text-align: center; color: var(--text); line-height: 24px; }
+  /* overrides para el fondo beige del ticket */
+  .receipt .qty-btn { border-color: rgba(10,15,11,0.22); background: rgba(10,15,11,0.07); color: var(--ink); }
+  .receipt .qty-btn:hover { background: rgba(10,15,11,0.14); }
+  .receipt .qty-num { color: var(--ink); }
 
+  /* ─── TICKET DE COMPRA ───────────────────────────────────────────── */
   .receipt-shell { display: flex; justify-content: center; }
   .receipt {
-    background: var(--paper); color: var(--ink); width: 100%; max-width: 420px; padding: 28px 26px 22px;
-    background-image: repeating-linear-gradient(0deg, transparent 0 2px, rgba(43,38,32,0.015) 2px 4px);
-    font-family: 'IBM Plex Mono', monospace; font-size: 13px; line-height: 1.55; position: relative;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+    background: var(--paper); color: var(--ink); width: 100%; max-width: 420px; padding: 30px 28px 24px;
+    background-image: repeating-linear-gradient(0deg, transparent 0 2px, rgba(43,38,32,0.012) 2px 4px);
+    font-family: 'IBM Plex Mono', monospace; font-size: 13px; line-height: 1.6; position: relative;
+    box-shadow: 0 32px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,0,0,0.15);
     clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 95% 97%, 90% 100%, 85% 97%, 80% 100%, 75% 97%, 70% 100%, 65% 97%, 60% 100%, 55% 97%, 50% 100%, 45% 97%, 40% 100%, 35% 97%, 30% 100%, 25% 97%, 20% 100%, 15% 97%, 10% 100%, 5% 97%, 0% 100%);
   }
-  .receipt-title { text-align: center; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 4px; }
-  .receipt-sub { text-align: center; color: var(--ink-soft); font-size: 11px; margin-bottom: 16px; }
+  .receipt-title { text-align: center; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; margin-bottom: 4px; }
+  .receipt-sub { text-align: center; color: var(--ink-soft); font-size: 11px; margin-bottom: 18px; }
   .receipt hr { border: none; border-top: 1px dashed var(--line); margin: 12px 0; }
-  .receipt-total { display: flex; justify-content: space-between; font-weight: 700; font-size: 16px; margin-top: 10px; }
-  .receipt-barcode { margin-top: 18px; text-align: center; font-size: 22px; letter-spacing: 2px; color: var(--ink-soft); }
+  .receipt-total { display: flex; justify-content: space-between; font-weight: 700; font-size: 16px; margin-top: 12px; }
+  .receipt-barcode { margin-top: 20px; text-align: center; font-size: 24px; letter-spacing: 3px; color: var(--ink-soft); }
 
   .actions { display: flex; gap: 10px; justify-content: center; margin-top: 22px; flex-wrap: wrap; }
-  .btn-copy, .btn-again { font-family: 'Inter', sans-serif; font-weight: 600; font-size: 13.5px; padding: 11px 18px; border-radius: 8px; cursor: pointer; border: 1px solid rgba(237,228,211,0.25); background: transparent; color: var(--paper-soft); }
-  .btn-copy { border-color: var(--mustard); color: var(--mustard); }
-  .btn-copy.copied { background: var(--mustard); color: #2B2013; border-color: var(--mustard); }
+  .btn-copy, .btn-again { font-family: 'Inter', sans-serif; font-weight: 600; font-size: 13px; padding: 11px 20px; border-radius: 10px; cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--muted); transition: all 0.18s; }
+  .btn-copy { border-color: rgba(232,163,61,0.4); color: var(--amber); }
+  .btn-copy:hover, .btn-again:hover { border-color: rgba(255,255,255,0.2); color: var(--text); }
+  .btn-copy.copied { background: var(--amber); color: #1a0f00; border-color: var(--amber); box-shadow: 0 4px 16px rgba(232,163,61,0.3); }
 
-  .empty-state { text-align: center; padding: 60px 20px; color: rgba(237,228,211,0.4); font-size: 14px; }
+  .empty-state { text-align: center; padding: 64px 20px; color: var(--dimmed); font-size: 14px; line-height: 1.7; }
 
-  .footer-note { text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; line-height: 1.8; color: rgba(237,228,211,0.35); margin-top: 56px; }
-  .footer-note a { color: var(--mustard); text-decoration: none; }
-  .footer-note a:hover { text-decoration: underline; }
+  /* ─── FOOTER ─────────────────────────────────────────────────────── */
+  .footer-note {
+    text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+    line-height: 2; color: var(--dimmed); margin-top: 72px;
+    padding-top: 32px; border-top: 1px solid var(--border);
+  }
+  .footer-note a { color: var(--amber); text-decoration: none; opacity: 0.8; }
+  .footer-note a:hover { opacity: 1; }
 
-  /* Picker de resultados */
+  /* ─── PICKER ─────────────────────────────────────────────────────── */
   .search-wrap { position: relative; }
   .picker {
-    position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 100;
-    background: #1a2b1f; border: 1px solid rgba(232,163,61,0.35);
-    border-radius: 10px; overflow: hidden;
-    box-shadow: 0 12px 40px rgba(0,0,0,0.5);
-    animation: pickerIn 0.15s ease;
+    position: absolute; top: calc(100% + 8px); left: 0; right: 0; z-index: 100;
+    background: #0d1a10; border: 1px solid rgba(232,163,61,0.3);
+    border-radius: 14px; overflow: hidden;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04);
+    animation: pickerIn 0.16s ease;
+    backdrop-filter: blur(16px);
   }
-  @keyframes pickerIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
-  .picker-item {
-    display: flex; align-items: center; gap: 12px;
-    padding: 10px 14px; cursor: pointer;
-    border-bottom: 1px solid rgba(237,228,211,0.06);
-    transition: background 0.1s;
-  }
+  @keyframes pickerIn { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:none; } }
+  .picker-item { display: flex; align-items: center; gap: 12px; padding: 10px 14px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); transition: background 0.12s; }
   .picker-item:last-child { border-bottom: none; }
-  .picker-item:hover { background: rgba(232,163,61,0.1); }
-  .picker-thumb {
-    width: 44px; height: 44px; border-radius: 6px; object-fit: cover;
-    flex-shrink: 0; background: rgba(237,228,211,0.07);
-  }
+  .picker-item:hover { background: rgba(232,163,61,0.08); }
+  .picker-thumb { width: 44px; height: 44px; border-radius: 8px; object-fit: cover; flex-shrink: 0; background: rgba(255,255,255,0.06); }
   .picker-info { flex: 1; min-width: 0; }
-  .picker-name { font-size: 13.5px; color: var(--paper-soft); line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .picker-meta { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: rgba(237,228,211,0.45); margin-top: 2px; }
-  .picker-price { font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 14px; color: var(--mustard); flex-shrink: 0; }
-  .picker-hint { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: rgba(237,228,211,0.3); padding: 6px 14px 8px; text-align: center; }
-  .picker-info-btn { background: rgba(237,228,211,0.08); border: none; color: rgba(237,228,211,0.5); font-size: 13px; width: 26px; height: 26px; border-radius: 50%; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; margin-left: 4px; }
-  .picker-info-btn:hover { background: rgba(237,228,211,0.15); color: var(--paper-soft); }
+  .picker-name { font-size: 13.5px; color: var(--text); line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .picker-meta { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--dimmed); margin-top: 2px; }
+  .picker-price { font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 14px; color: var(--amber); flex-shrink: 0; }
+  .picker-hint { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--dimmed); padding: 7px 14px 9px; text-align: center; }
+  .picker-info-btn { background: rgba(255,255,255,0.07); border: none; color: var(--muted); font-size: 13px; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; margin-left: 4px; transition: background 0.15s; }
+  .picker-info-btn:hover { background: rgba(255,255,255,0.14); color: var(--text); }
 
-  /* Modal ficha producto — bottom sheet en móvil, tarjeta centrada en desktop */
-  .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+  /* ─── MODAL ──────────────────────────────────────────────────────── */
+  .modal-overlay {
+    position: fixed; top:0; left:0; right:0; bottom:0;
+    background: rgba(0,0,0,0.72); z-index: 200;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.22s;
+    backdrop-filter: blur(4px);
+  }
   .modal-overlay.open { opacity: 1; pointer-events: all; }
-  .modal-box { position: absolute; left: 0; right: 0; bottom: 0; background: #2d3d31; border-radius: 18px 18px 0 0; max-height: 92vh; overflow-y: auto; -webkit-overflow-scrolling: touch; transform: translateY(30px); transition: transform 0.25s ease; }
+
+  .modal-box {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    background: #0f1d12;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 22px 22px 0 0;
+    max-height: 92vh; overflow-y: auto; -webkit-overflow-scrolling: touch;
+    transform: translateY(40px); transition: transform 0.3s cubic-bezier(0.32,0.72,0,1);
+    box-shadow: 0 -24px 80px rgba(0,0,0,0.6);
+  }
   .modal-overlay.open .modal-box { transform: translateY(0); }
+
   @media (min-width: 600px) {
-    .modal-box { left: 50%; right: auto; bottom: auto; top: 50%; transform: translate(-50%, -48%) scale(0.97); width: 520px; max-height: 88vh; border-radius: 18px; }
+    .modal-box {
+      left: 50%; right: auto; bottom: auto; top: 50%;
+      transform: translate(-50%, -46%) scale(0.96);
+      width: 520px; max-height: 88vh; border-radius: 20px;
+    }
     .modal-overlay.open .modal-box { transform: translate(-50%, -50%) scale(1); }
   }
-  .modal-box-scroll { padding-bottom: 32px; }
-  .modal-photos { position: relative; background: rgba(237,228,211,0.06); overflow: hidden; }
-  .modal-photos img { width: 100%; height: 210px; object-fit: contain; display: block; }
-  .modal-photos-nav { display: flex; gap: 6px; justify-content: center; padding: 8px 0; }
-  .modal-photo-dot { width: 7px; height: 7px; border-radius: 50%; background: rgba(237,228,211,0.2); cursor: pointer; transition: background 0.15s; }
-  .modal-photo-dot.active { background: var(--mustard); }
-  .modal-photo-arrow { position: absolute; top: 105px; transform: translateY(-50%); background: rgba(0,0,0,0.35); border: none; color: var(--paper-soft); font-size: 22px; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 3; }
-  .modal-photo-arrow.prev { left: 8px; }
-  .modal-photo-arrow.next { right: 8px; }
-  .modal-close { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.45); border: none; color: var(--paper-soft); font-size: 16px; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 4; }
-  .modal-body { padding: 20px 22px 0; }
-  .modal-brand { font-family: 'IBM Plex Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--mustard); margin-bottom: 4px; }
-  .modal-name { font-family: 'Space Grotesk', sans-serif; font-size: 20px; font-weight: 700; color: var(--paper-soft); margin: 0 0 6px; line-height: 1.2; }
-  .modal-cat { font-size: 12px; opacity: 0.45; margin-bottom: 14px; }
-  .modal-prices { display: flex; gap: 14px; align-items: baseline; margin-bottom: 18px; flex-wrap: wrap; }
-  .modal-price-main { font-family: 'IBM Plex Mono', monospace; font-size: 26px; font-weight: 700; color: var(--mustard); }
-  .modal-price-kg { font-family: 'IBM Plex Mono', monospace; font-size: 14px; opacity: 0.5; }
-  .modal-badge { font-family: 'IBM Plex Mono', monospace; font-size: 10px; padding: 3px 8px; border-radius: 5px; background: rgba(90,184,138,0.2); color: #5ab88a; }
-  .modal-badge.new { background: rgba(232,163,61,0.2); color: var(--mustard); }
-  .modal-section { margin-bottom: 16px; }
-  .modal-section-title { font-family: 'IBM Plex Mono', monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.4; margin-bottom: 6px; }
-  .modal-section-body { font-size: 13px; line-height: 1.6; opacity: 0.85; }
-  .modal-section-body strong { color: #e05a4e; font-weight: 600; }
-  .modal-divider { border: none; border-top: 1px solid rgba(237,228,211,0.08); margin: 16px 0; }
-  .modal-link { display: inline-flex; align-items: center; gap: 6px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--mustard); text-decoration: none; opacity: 0.7; margin-top: 8px; }
-  .modal-link:hover { opacity: 1; }
-  .modal-loading { text-align: center; padding: 60px 20px; font-family: 'IBM Plex Mono', monospace; font-size: 13px; opacity: 0.4; }
 
-  /* Pulso Mercadona */
-  .pulso { display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 28px; }
+  /* drag handle on mobile */
+  .modal-box::before {
+    content: '';
+    display: block; width: 36px; height: 4px; border-radius: 2px;
+    background: rgba(255,255,255,0.15);
+    margin: 12px auto 0;
+  }
+  @media (min-width: 600px) { .modal-box::before { display: none; } }
+
+  .modal-box-scroll { padding-bottom: 36px; }
+  .modal-photos { position: relative; background: rgba(255,255,255,0.04); overflow: hidden; border-radius: 12px 12px 0 0; }
+  .modal-photos img { width: 100%; height: 220px; object-fit: contain; display: block; }
+  .modal-photos-nav { display: flex; gap: 6px; justify-content: center; padding: 10px 0 8px; }
+  .modal-photo-dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.18); cursor: pointer; transition: background 0.15s, transform 0.15s; }
+  .modal-photo-dot.active { background: var(--amber); transform: scale(1.3); }
+  .modal-photo-arrow { position: absolute; top: 110px; transform: translateY(-50%); background: rgba(0,0,0,0.45); border: none; color: var(--text); font-size: 20px; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 3; transition: background 0.15s; }
+  .modal-photo-arrow:hover { background: rgba(0,0,0,0.7); }
+  .modal-photo-arrow.prev { left: 10px; }
+  .modal-photo-arrow.next { right: 10px; }
+  .modal-close { position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,0.5); border: none; color: var(--text); font-size: 15px; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 4; transition: background 0.15s; }
+  .modal-close:hover { background: rgba(0,0,0,0.75); }
+
+  .modal-body { padding: 20px 24px 0; }
+  .modal-brand { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.13em; color: var(--amber); margin-bottom: 5px; opacity: 0.85; }
+  .modal-name { font-family: 'Space Grotesk', sans-serif; font-size: 21px; font-weight: 700; color: var(--text); margin: 0 0 6px; line-height: 1.2; }
+  .modal-cat { font-size: 12px; color: var(--dimmed); margin-bottom: 16px; }
+  .modal-prices { display: flex; gap: 14px; align-items: baseline; margin-bottom: 20px; flex-wrap: wrap; }
+  .modal-price-main { font-family: 'IBM Plex Mono', monospace; font-size: 28px; font-weight: 700; color: var(--amber); text-shadow: 0 0 30px rgba(232,163,61,0.3); }
+  .modal-price-kg { font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: var(--dimmed); }
+  .modal-badge { font-family: 'IBM Plex Mono', monospace; font-size: 10px; padding: 3px 9px; border-radius: 6px; background: var(--green-d); color: var(--green); }
+  .modal-badge.new { background: var(--amber-d); color: var(--amber); }
+  .modal-section { margin-bottom: 16px; }
+  .modal-section-title { font-family: 'IBM Plex Mono', monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--dimmed); margin-bottom: 7px; }
+  .modal-section-body { font-size: 13px; line-height: 1.65; color: var(--muted); }
+  .modal-section-body strong { color: var(--red); font-weight: 600; }
+  .modal-divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+  .modal-link { display: inline-flex; align-items: center; gap: 6px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--amber); text-decoration: none; opacity: 0.65; margin-top: 8px; transition: opacity 0.15s; }
+  .modal-link:hover { opacity: 1; }
+  .modal-loading { text-align: center; padding: 64px 20px; font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: var(--dimmed); }
+
+  /* ─── PULSO ──────────────────────────────────────────────────────── */
+  .pulso { display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 32px; }
   @media (min-width: 640px) { .pulso { grid-template-columns: 1fr 1fr; } }
   @media (min-width: 880px) { .pulso { grid-template-columns: 2fr 1fr 1fr; } }
-  .pulso-card { background: var(--bg-soft); border: 1px solid rgba(237,228,211,0.08); border-radius: 12px; padding: 16px 18px; }
-  .pulso-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(237,228,211,0.4); margin-bottom: 8px; }
-  .pulso-value { font-family: 'Space Grotesk', sans-serif; font-size: 22px; font-weight: 700; color: var(--paper-soft); font-variant-numeric: tabular-nums; }
-  .pulso-value.up { color: #e05a4e; }
-  .pulso-value.down { color: #5ab88a; }
-  .pulso-sub { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: rgba(237,228,211,0.4); margin-top: 4px; }
-  .pulso-loading { opacity: 0.3; font-family: 'IBM Plex Mono', monospace; font-size: 12px; }
 
-  /* Radiografía del catálogo */
-  .stats-card { background: var(--bg-soft); border: 1px solid rgba(237,228,211,0.08); border-radius: 12px; padding: 18px; margin-bottom: 16px; }
-  .stats-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+  .pulso-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 16px; padding: 20px 22px;
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    position: relative; overflow: hidden;
+  }
+  .pulso-card::after {
+    content: ''; position: absolute; inset: 0; border-radius: inherit;
+    background: radial-gradient(circle at 100% 0%, rgba(232,163,61,0.05), transparent 60%);
+    pointer-events: none;
+  }
+  .pulso-card:hover { transform: translateY(-4px); border-color: rgba(232,163,61,0.22); box-shadow: 0 16px 40px rgba(0,0,0,0.4); }
+  .pulso-card:nth-child(2):hover { border-color: rgba(255,84,73,0.22); }
+  .pulso-card:nth-child(2)::after { background: radial-gradient(circle at 100% 0%, rgba(255,84,73,0.06), transparent 60%); }
+  .pulso-card:nth-child(3):hover { border-color: rgba(34,197,94,0.22); }
+  .pulso-card:nth-child(3)::after { background: radial-gradient(circle at 100% 0%, rgba(34,197,94,0.06), transparent 60%); }
+
+  .pulso-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--dimmed); margin-bottom: 10px; }
+  .pulso-value { font-family: 'Space Grotesk', sans-serif; font-size: 26px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; line-height: 1.1; letter-spacing: -0.02em; }
+  .pulso-value.up { color: var(--red); text-shadow: 0 0 24px rgba(255,84,73,0.3); }
+  .pulso-value.down { color: var(--green); text-shadow: 0 0 24px rgba(34,197,94,0.3); }
+  .pulso-sub { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--dimmed); margin-top: 6px; line-height: 1.4; }
+  .pulso-loading { color: var(--dimmed); font-family: 'IBM Plex Mono', monospace; font-size: 13px; }
+
+  /* ─── RADIOGRAFÍA ────────────────────────────────────────────────── */
+  .stats-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 16px; backdrop-filter: blur(12px); }
+  .stats-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
   .stats-head .ranking-dias { margin-bottom: 0; }
-  .stats-title { font-family: 'Space Grotesk', sans-serif; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--mustard); }
-  .stats-bar { display: flex; height: 12px; border-radius: 6px; overflow: hidden; background: rgba(237,228,211,0.06); margin-bottom: 12px; }
-  .stats-seg { min-width: 2px; transition: width 0.4s ease; }
-  .stats-seg.up { background: #e05a4e; }
-  .stats-seg.flat { background: rgba(237,228,211,0.18); }
-  .stats-seg.down { background: #5ab88a; }
-  .stats-legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: rgba(237,228,211,0.65); font-variant-numeric: tabular-nums; }
+  .stats-title { font-family: 'Space Grotesk', sans-serif; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: var(--amber); }
+  .stats-bar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; background: rgba(255,255,255,0.06); margin-bottom: 14px; gap: 1px; }
+  .stats-seg { min-width: 2px; transition: width 0.5s cubic-bezier(0.4,0,0.2,1); }
+  .stats-seg.up { background: var(--red); }
+  .stats-seg.flat { background: rgba(255,255,255,0.15); }
+  .stats-seg.down { background: var(--green); }
+  .stats-legend { display: flex; flex-wrap: wrap; gap: 8px 20px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
   .stats-legend .dot { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 6px; }
-  .stats-legend .dot.up { background: #e05a4e; }
-  .stats-legend .dot.flat { background: rgba(237,228,211,0.18); }
-  .stats-legend .dot.down { background: #5ab88a; }
+  .stats-legend .dot.up { background: var(--red); }
+  .stats-legend .dot.flat { background: rgba(255,255,255,0.18); }
+  .stats-legend .dot.down { background: var(--green); }
   .stats-media { margin-left: auto; }
-  .stats-media b.up { color: #e05a4e; }
-  .stats-media b.down { color: #5ab88a; }
+  .stats-media b.up { color: var(--red); }
+  .stats-media b.down { color: var(--green); }
 
-  /* Ranking */
-  .ranking-grid { display: grid; gap: 16px; }
+  /* ─── RANKING ────────────────────────────────────────────────────── */
+  .ranking-grid { display: grid; gap: 16px; margin-bottom: 32px; }
   @media (min-width: 700px) { .ranking-grid { grid-template-columns: 1fr 1fr; } }
-  .ranking-card { background: var(--bg-soft); border: 1px solid rgba(237,228,211,0.08); border-radius: 12px; padding: 18px; }
-  .ranking-title { font-family: 'Space Grotesk', sans-serif; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 14px; }
-  .ranking-title.up { color: #e05a4e; }
-  .ranking-title.down { color: #5ab88a; }
-  .ranking-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid rgba(237,228,211,0.06); }
-  .ranking-row:last-child { border-bottom: none; }
-  .ranking-thumb { width: 30px; height: 30px; border-radius: 4px; object-fit: cover; flex-shrink: 0; background: var(--line); }
-  .ranking-pos { font-family: 'IBM Plex Mono', monospace; font-size: 11px; opacity: 0.3; width: 16px; flex-shrink: 0; }
-  .ranking-name { flex: 1; font-size: 12.5px; line-height: 1.3; }
-  .ranking-pct { font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600; flex-shrink: 0; }
-  .ranking-pct.up { color: #e05a4e; }
-  .ranking-pct.down { color: #5ab88a; }
-  .ranking-abs { font-family: 'IBM Plex Mono', monospace; font-size: 10px; opacity: 0.45; flex-shrink: 0; }
-  .ranking-nodata { font-family: 'IBM Plex Mono', monospace; font-size: 12px; opacity: 0.4; text-align: center; padding: 24px 0; line-height: 1.6; }
-  .ranking-dias { display: flex; gap: 6px; margin-bottom: 14px; }
-  .ranking-dias button { font-family: 'IBM Plex Mono', monospace; font-size: 11px; padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(237,228,211,0.15); background: transparent; color: rgba(237,228,211,0.5); cursor: pointer; }
-  .ranking-dias button.active { background: rgba(237,228,211,0.1); color: var(--paper-soft); border-color: rgba(237,228,211,0.3); }
 
-  /* Accesibilidad */
-  :focus-visible { outline: 2px solid var(--mustard); outline-offset: 2px; border-radius: 4px; }
+  .ranking-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; backdrop-filter: blur(12px); }
+  .ranking-title { font-family: 'Space Grotesk', sans-serif; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; margin-bottom: 16px; }
+  .ranking-title.up { color: var(--red); }
+  .ranking-title.down { color: var(--green); }
+  .ranking-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+  .ranking-row:last-child { border-bottom: none; }
+  .ranking-thumb { width: 32px; height: 32px; border-radius: 6px; object-fit: cover; flex-shrink: 0; background: rgba(255,255,255,0.06); }
+  .ranking-pos { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--dimmed); width: 16px; flex-shrink: 0; }
+  .ranking-name { flex: 1; font-size: 12.5px; line-height: 1.35; color: var(--muted); }
+  .ranking-pct { font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; font-weight: 700; flex-shrink: 0; }
+  .ranking-pct.up { color: var(--red); }
+  .ranking-pct.down { color: var(--green); }
+  .ranking-abs { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--dimmed); flex-shrink: 0; }
+  .ranking-nodata { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--dimmed); text-align: center; padding: 28px 0; line-height: 1.7; }
+  .ranking-dias { display: flex; gap: 5px; margin-bottom: 14px; }
+  .ranking-dias button { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--dimmed); cursor: pointer; transition: all 0.15s; }
+  .ranking-dias button:hover { color: var(--muted); border-color: rgba(255,255,255,0.15); }
+  .ranking-dias button.active { background: rgba(255,255,255,0.08); color: var(--text); border-color: rgba(255,255,255,0.2); }
+
+  /* ─── ACCESIBILIDAD ──────────────────────────────────────────────── */
+  :focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; border-radius: 6px; }
   @media (prefers-reduced-motion: reduce) {
     .ticker-track { animation: none; }
     .ticker { overflow-x: auto; }
     .receipt-line { animation: none; opacity: 1; }
-    * { transition-duration: 0.01ms !important; }
+    * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
   }
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <p class="eyebrow">CestaViva · observatorio de precios de Mercadona · sin login</p>
+    <p class="eyebrow">CestaViva · Mercadona · Sin login</p>
     <h1>La bolsa de la compra, <em>cotizando</em> en directo.</h1>
-    <p>Seguimiento diario de más de 1.000 productos: histórico de precios, índice de inflación propio, radiografía del catálogo y ranking de subidas y bajadas. Y tu cesta con memoria, para saber cuánto sube <em style="font-style:normal;color:var(--mustard)">tu</em> compra.</p>
+    <p>Cada noche capturamos los precios de Mercadona. Así puedes ver qué ha subido, qué ha bajado y cuánto cuesta hoy lo que compras normalmente — sin registrarte ni instalar nada.</p>
   </header>
 
   <!-- Cinta de cotización -->
@@ -303,17 +488,17 @@
   <!-- Pulso Mercadona — siempre visible -->
   <div class="pulso" id="pulsoWrap">
     <div class="pulso-card">
-      <div class="pulso-label">Índice inflación Mercadona</div>
+      <div class="pulso-label">Tu cesta de hoy</div>
       <div class="pulso-value pulso-loading" id="pulsoInflacion">calculando…</div>
-      <div class="pulso-sub" id="pulsoInflacionSub">cesta de 30 productos básicos</div>
+      <div class="pulso-sub" id="pulsoInflacionSub">30 productos básicos de Mercadona</div>
     </div>
     <div class="pulso-card">
-      <div class="pulso-label">Mayor subida (7d)</div>
+      <div class="pulso-label">Mayores subidas</div>
       <div class="pulso-value up pulso-loading" id="pulsoSubida">—</div>
       <div class="pulso-sub" id="pulsoSubidaSub"></div>
     </div>
     <div class="pulso-card">
-      <div class="pulso-label">Mayor bajada (7d)</div>
+      <div class="pulso-label">Mayores bajadas</div>
       <div class="pulso-value down pulso-loading" id="pulsoBajada">—</div>
       <div class="pulso-sub" id="pulsoBajadaSub"></div>
     </div>
@@ -328,7 +513,7 @@
   <div class="tab-panel" id="tab-search">
     <div class="grid">
       <section class="panel">
-        <h2>Añade lo que quieras</h2>
+        <h2>Monta tu cesta</h2>
         <div class="search-wrap">
           <div class="search-row">
             <input type="text" id="searchInput" placeholder="ej. leche, plátano, papel higiénico…" autocomplete="off">
@@ -336,12 +521,12 @@
           </div>
           <div class="picker" id="picker" style="display:none"></div>
         </div>
-        <p class="search-hint">Escribe el producto y pulsa "Buscar". Elige el que quieras de la lista.</p>
+        <p class="search-hint">Busca lo que compras habitualmente y ve sumando a tu cesta.</p>
         <p class="search-error" id="searchError" style="display:none;"></p>
-        <p class="disclaimer">Precios en directo desde Mercadona (proxy propio, sin login).<br>Esto no compra nada por ti — copia la lista en la app de Mercadona para pedirlo.</p>
+        <p class="disclaimer">Los precios vienen directamente de Mercadona, siempre actualizados.<br>Aquí no se compra nada — esto es solo para que sepas qué te va a costar.</p>
       </section>
       <section id="searchResults">
-        <div class="empty-state">Tu lista aparecerá aquí →</div>
+        <div class="empty-state">Aquí verás tu lista con los precios →</div>
       </section>
     </div>
   </div>
@@ -351,7 +536,7 @@
     <!-- Radiografía del catálogo -->
     <div class="stats-card" id="statsCard" style="display:none">
       <div class="stats-head">
-        <span class="stats-title">Radiografía del catálogo</span>
+        <span class="stats-title">¿Qué ha cambiado?</span>
         <div class="ranking-dias" id="statsDias">
           <button class="active" data-dias="7">7 días</button>
           <button data-dias="30">30 días</button>
@@ -365,7 +550,7 @@
     <!-- Ranking subidas / bajadas -->
     <div class="ranking-grid" style="margin-bottom:28px" id="rankingWrap">
       <div class="ranking-card">
-        <div class="ranking-title up">▲ Más subidos</div>
+        <div class="ranking-title up">▲ Mayores subidas</div>
         <div class="ranking-dias" id="diasBtnsUp">
           <button class="active" data-dias="7">7 días</button>
           <button data-dias="30">30 días</button>
@@ -374,7 +559,7 @@
         <div id="rankingSubidas"><div class="ranking-nodata">Cargando…</div></div>
       </div>
       <div class="ranking-card">
-        <div class="ranking-title down">▼ Más bajados</div>
+        <div class="ranking-title down">▼ Mayores bajadas</div>
         <div class="ranking-dias" id="diasBtnsDown">
           <button class="active" data-dias="7">7 días</button>
           <button data-dias="30">30 días</button>
@@ -386,7 +571,7 @@
 
     <div class="grid">
       <section class="panel">
-        <h2>Busca un producto</h2>
+        <h2>¿Cómo ha cambiado el precio?</h2>
         <div class="search-wrap">
           <div class="search-row">
             <input type="text" id="histInput" placeholder="ej. leche entera, aceite, pollo…" autocomplete="off">
@@ -394,21 +579,21 @@
           </div>
           <div class="picker" id="histPicker" style="display:none"></div>
         </div>
-        <p class="search-hint">Selecciona el producto para ver su histórico completo de precios.</p>
+        <p class="search-hint">Busca cualquier producto y mira cómo ha cambiado de precio con el tiempo.</p>
         <div id="histInfo" style="display:none; margin-top:20px;">
           <div class="hist-product-name" id="histProductName"></div>
           <div class="hist-stats" id="histStats"></div>
         </div>
       </section>
       <section id="histResults">
-        <div class="empty-state">El histórico de precios aparecerá aquí →</div>
+        <div class="empty-state">El gráfico de precios aparecerá aquí →</div>
       </section>
     </div>
   </div>
 
   <footer class="footer-note">
-    CestaViva no está afiliada a Mercadona — los precios vienen de su buscador público.<br>
-    Hecho por <a href="https://github.com/HerniRG" target="_blank" rel="noopener">Hernán Rodríguez</a> · datos actualizados cada noche
+    Sin afiliación con Mercadona — los precios son públicos, nosotros solo los guardamos.<br>
+    Por <a href="https://github.com/HerniRG" target="_blank" rel="noopener">Hernán Rodríguez</a> · se actualiza cada noche
   </footer>
 
 </div>
@@ -592,11 +777,11 @@ async function loadPulso() {
       const arrow = d.vs30.pct > 0 ? '▲' : d.vs30.pct < 0 ? '▼' : '';
       el.className = 'pulso-value ' + cls;
       el.textContent = arrow + ' ' + Math.abs(d.vs30.pct) + '%';
-      sub.textContent = `vs hace 30 días · cesta de ${d.productos} productos`;
+      sub.textContent = `comparado con hace 30 días · ${d.productos} productos`;
     } else {
       el.className = 'pulso-value';
       el.textContent = d.totalActual.toFixed(2) + '€';
-      sub.textContent = `cesta de ${d.productos} productos básicos · sin histórico aún`;
+      sub.textContent = `${d.productos} productos básicos · aún sin datos de ayer para comparar`;
     }
   } catch { document.getElementById('pulsoInflacion').textContent = '—'; }
 
@@ -659,7 +844,7 @@ document.getElementById('statsDias').addEventListener('click', e => {
 
 /* ---------- Ranking ---------- */
 function renderRankingRows(items, type) {
-  if (!items.length) return `<div class="ranking-nodata">Sin datos todavía.<br>El cron job acumulará datos cada noche.</div>`;
+  if (!items.length) return `<div class="ranking-nodata">Todavía no hay suficientes días para ver cambios.<br>Vuelve mañana — se actualiza cada noche.</div>`;
   return items.map((it, i) => {
     const thumb = it.thumbnail ? `<img class="ranking-thumb" src="${it.thumbnail}" alt="" loading="lazy" onerror="this.style.display='none'">` : '';
     return `
@@ -834,7 +1019,7 @@ async function searchTerm() {
     } else if (data.results.length === 1) {
       pickItem(data.results[0], term);
     } else {
-      picker.innerHTML = data.results.map(pickerItemHtml).join('') + '<div class="picker-hint">Toca para añadir · ℹ para ver la ficha</div>';
+      picker.innerHTML = data.results.map(pickerItemHtml).join('') + '<div class="picker-hint">Toca para añadir a tu cesta · ℹ para ver la ficha</div>';
       picker.style.display = 'block';
       picker.querySelectorAll('.picker-item').forEach((el, i) => {
         el.addEventListener('click', () => pickItem(data.results[i], term));
@@ -967,7 +1152,7 @@ async function histSearch() {
     const res = await fetch('/api/search?q=' + encodeURIComponent(term));
     const data = await res.json();
     if (!data.results?.length) { histResults.innerHTML = '<div class="empty-state">Sin resultados para "' + term + '"</div>'; return; }
-    histPicker.innerHTML = data.results.map(pickerItemHtml).join('') + '<div class="picker-hint">Elige el producto para ver su histórico</div>';
+    histPicker.innerHTML = data.results.map(pickerItemHtml).join('') + '<div class="picker-hint">Elige un producto para ver cómo ha cambiado su precio</div>';
     histPicker.style.display = 'block';
     histPicker.querySelectorAll('.picker-item').forEach((el, i) => {
       el.addEventListener('click', () => { closeHistPicker(); loadHistorico(data.results[i]); });
@@ -988,7 +1173,7 @@ document.addEventListener('click', e => {
 });
 
 function buildFullChart(history, currentPrice) {
-  if (!history.length) return `<div class="hist-no-data">Sin datos históricos todavía.<br>El cron job los irá acumulando cada noche.</div>`;
+  if (!history.length) return `<div class="hist-no-data">Aún no tenemos histórico de este producto.<br>Empieza a aparecer esta noche.</div>`;
   const W = 500, H = 160, PAD = { top: 12, right: 16, bottom: 28, left: 44 };
   const cW = W - PAD.left - PAD.right;
   const cH = H - PAD.top - PAD.bottom;
@@ -1071,18 +1256,25 @@ async function loadHistorico(product) {
     const h = data.history || [];
     const currentPrice = product.price;
 
-    // Stats
+    if (!h.length) {
+      histStats.innerHTML = `<div class="hist-stat"><div class="label">Precio actual</div><div class="val">${currentPrice.toFixed(2)}€</div></div>`;
+      histResults.innerHTML = buildFullChart(h, currentPrice);
+      return;
+    }
+
+    // Stats — solo cuando hay al menos 1 día de histórico
     const changeAbs = data.change !== undefined ? data.change : 0;
     const changePct = data.changePct !== undefined ? data.changePct : 0;
     const cls = changeAbs > 0 ? 'up' : changeAbs < 0 ? 'down' : '';
-    const arrow = changeAbs > 0 ? '▲' : changeAbs < 0 ? '▼' : '—';
+    const arrow = changeAbs > 0 ? '▲' : changeAbs < 0 ? '▼' : '';
     const days = h.length;
+    const hasRange = data.min !== undefined && data.min !== data.max;
     histStats.innerHTML = `
       <div class="hist-stat"><div class="label">Precio actual</div><div class="val">${currentPrice.toFixed(2)}€</div></div>
-      <div class="hist-stat"><div class="label">Mínimo</div><div class="val down">${data.min !== undefined ? data.min.toFixed(2) : '—'}€</div></div>
-      <div class="hist-stat"><div class="label">Máximo</div><div class="val up">${data.max !== undefined ? data.max.toFixed(2) : '—'}€</div></div>
-      <div class="hist-stat"><div class="label">Variación total</div><div class="val ${cls}">${arrow} ${Math.abs(changeAbs).toFixed(2)}€ (${Math.abs(changePct)}%)</div></div>
-      <div class="hist-stat"><div class="label">Días de datos</div><div class="val">${days}</div></div>`;
+      ${hasRange ? `<div class="hist-stat"><div class="label">Mínimo histórico</div><div class="val down">${data.min.toFixed(2)}€</div></div>` : ''}
+      ${hasRange ? `<div class="hist-stat"><div class="label">Máximo histórico</div><div class="val up">${data.max.toFixed(2)}€</div></div>` : ''}
+      ${days > 1 ? `<div class="hist-stat"><div class="label">Variación total</div><div class="val ${cls}">${arrow} ${Math.abs(changeAbs).toFixed(2)}€ (${Math.abs(changePct)}%)</div></div>` : ''}
+      <div class="hist-stat"><div class="label">Días seguidos</div><div class="val">${days}</div></div>`;
 
     histResults.innerHTML = buildFullChart(h, currentPrice);
   } catch {
