@@ -33,6 +33,16 @@ function saveHistorico(data) {
   fs.writeFileSync(HISTORICO_PATH, JSON.stringify(data));
 }
 
+// Extrae productos de cualquier nivel del árbol de categorías de Mercadona
+function extractProductsRecursive(node) {
+  const products = [];
+  if (Array.isArray(node.products)) products.push(...node.products);
+  for (const sub of (node.categories || [])) {
+    products.push(...extractProductsRecursive(sub));
+  }
+  return products;
+}
+
 // Obtiene TODOS los productos de Mercadona iterando sus categorías (sin límite de Algolia)
 async function getAllProductsFromMercadona(warehouse, lang = 'es') {
   const { status, body } = await httpsGet(
@@ -49,6 +59,7 @@ async function getAllProductsFromMercadona(warehouse, lang = 'es') {
     }
   }
 
+  const seen = new Set();
   const allProducts = [];
   const CONCURRENCY = 5;
   for (let i = 0; i < subcatIds.length; i += CONCURRENCY) {
@@ -60,10 +71,15 @@ async function getAllProductsFromMercadona(warehouse, lang = 'es') {
           `/api/categories/${subcatId}/?lang=${lang}&wh=${warehouse}`
         );
         if (s !== 200) return [];
-        return (b.categories || []).flatMap(inner => inner.products || []);
+        return extractProductsRecursive(b);
       } catch { return []; }
     }));
-    allProducts.push(...results.flat());
+    for (const product of results.flat()) {
+      if (product.id && !seen.has(product.id)) {
+        seen.add(product.id);
+        allProducts.push(product);
+      }
+    }
   }
   return allProducts;
 }
